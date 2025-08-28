@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.horizontal-scroll {
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  
+}
+
+.horizontal-scroll > * {
+  scroll-snap-align: start;
+}
+
+.kanban-list {
+  scroll-snap-type: y mandatory;
+}
+
+.kanban-card {
+  scroll-snap-align: start;
+}
