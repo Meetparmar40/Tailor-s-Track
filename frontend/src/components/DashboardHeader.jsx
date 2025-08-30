@@ -1,6 +1,12 @@
+import { useSidebar } from "../context/SidebarContext.jsx";
+
 export default function DashboardHeader({ userName }) {
+  const { sidebarWidth } = useSidebar();
   return (
-    <div className="fixed top-0 left-64 right-0 h-16 flex items-center justify-between">
+    <div
+      className="fixed top-0 right-0 h-16 z-10 flex items-center justify-between bg-gray-50"
+      style={{ left: `${sidebarWidth}px` }}
+    >
       {/* Greeting */}
       <h1 className="text-xl sm:text-2xl font-semibold ml-8">
         Hello, {userName}! 👋

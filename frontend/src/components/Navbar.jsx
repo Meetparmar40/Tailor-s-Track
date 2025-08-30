@@ -4,10 +4,11 @@ import logo from "../assets/images/logo.png";
 import logoMini from "../assets/images/logomini.png";
 import menuIcon from "../assets/icons/menu.svg";
 import { useLocation } from "react-router-dom";
+import { useSidebar } from "../context/SidebarContext.jsx";
 
 export default function Navbar() {
   const location = useLocation();
-  const [collapsed, setCollapsed] = React.useState(false);
+  const { collapsed, setSidebarCollapsed } = useSidebar();
 
   const isActive = (path) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -15,12 +16,15 @@ export default function Navbar() {
     return false;
   };
 
-  const getNavItemClasses = (path) => {
-    const baseClasses = "flex items-center gap-3 transition-colors duration-200";
-    const activeClasses = "text-black font-semibold bg-gray-100 px-3 py-2 rounded-lg";
-    const inactiveClasses = "text-gray-700 hover:text-black hover:bg-gray-50 px-3 py-2 rounded-lg";
+  const getNavItemClasses = (path, collapsed) => {
+    const baseClasses = `flex items-center transition-colors duration-200 rounded-lg ${
+      collapsed ? "justify-center px-2 py-3" : "justify-start px-4 py-3 gap-3 w-full"
+    }`;
+    const activeClasses = "text-black font-semibold bg-gray-100";
+    const inactiveClasses = "text-gray-700 hover:text-black hover:bg-gray-50";
     return `${baseClasses} ${isActive(path) ? activeClasses : inactiveClasses}`;
   };
+  
 
   return (
     <>
@@ -40,8 +44,8 @@ export default function Navbar() {
             {/* Collapse Button */}
             <button
               type="button"
-              onClick={() => setCollapsed(true)}
-              className="p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              onClick={() => setSidebarCollapsed(true)}
+              className="p-2 rounded-full hover:bg-gray-100 focus:outline-none ring-2 ring-gray-300"
               aria-label="Collapse sidebar"
             >
               <ChevronLeft size={20} />
@@ -56,8 +60,8 @@ export default function Navbar() {
             {/* Expand Button */}
             <button
               type="button"
-              onClick={() => setCollapsed(false)}
-              className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              onClick={() => setSidebarCollapsed(false)}
+              className="p-2 rounded-full hover:bg-gray-100 focus:outline-none ring-2 ring-gray-300"
               aria-label="Expand sidebar"
             >
               <ChevronRight size={20} />
@@ -86,16 +90,29 @@ export default function Navbar() {
         </nav>
 
         {/* Add Buttons (Desktop only, hide when collapsed) */}
-        {!collapsed && (
-          <div className="hidden lg:flex flex-col gap-2 mb-4">
-            <button className="w-full bg-black text-white py-2 rounded-full font-medium hover:bg-gray-800 transition">
-              ＋ Add Order
-            </button>
-            <button className="w-full bg-white text-black py-2 border border-black rounded-full font-medium hover:bg-gray-100 transition">
-              ＋ Add Customer
-            </button>
-          </div>
-        )}
+        {/* Add Buttons */}
+        <div className="hidden lg:flex flex-col gap-3 mb-6 px-2">
+          {!collapsed ? (
+            <>
+              <button className="flex mx-auto items-center justify-center gap-2 w-[215px] bg-black text-white py-3 rounded-full font-medium shadow-md hover:bg-gray-900 hover:scale-[1.02] transition">
+                <Plus size={18} /> Add Order
+              </button>
+              <button className="flex mx-auto items-center justify-center gap-2 w-[215px] bg-white text-black py-3 border border-black rounded-full font-medium shadow hover:scale-[1.02] transition">
+                <User size={18} /> Add Customer
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+              <button className="p-3 bg-black text-white rounded-full shadow-md hover:bg-gray-900 hover:scale-105 transition">
+                <Plus size={20} />
+              </button>
+              <button className="p-3 bg-white text-black border border-black rounded-full shadow hover:scale-105 transition">
+                <User size={20} />
+              </button>
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* Mobile Bottom Bar */}

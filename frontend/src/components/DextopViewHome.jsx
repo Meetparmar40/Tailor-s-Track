@@ -1,8 +1,11 @@
 import CustomerCard from "./CustomerCard";
 import DashboardHeader from "./DashboardHeader";
 import { useEffect } from "react";
+import { useSidebar } from "../context/SidebarContext.jsx";
 
 export default function DextopViewHome({ userName, orders = [] }) {
+
+  // code for horizontal scroll bar
   useEffect(() => {
     const el = document.querySelector(".horizontal-scroll");
     if (!el) return;
@@ -54,15 +57,17 @@ export default function DextopViewHome({ userName, orders = [] }) {
     };
   }, []);
 
+  const { sidebarWidth } = useSidebar();
+
   return (
     <div className="bg-gray-50 h-screen overflow-hidden">
       {/* Topbar fixed */}
-      <div className="fixed top-0 md:left-56 lg:left-64 right-0 z-10">
+      <div className="fixed top-0 right-0 z-10" style={{ left: `${sidebarWidth}px` }}>
         <DashboardHeader userName={userName} />
       </div>
 
       {/* Kanban board area */}
-      <div className="m-6 pt-16 h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="pt-16 px-6 pb-6 h-[calc(100vh-4rem)] overflow-hidden">
         <div className="horizontal-scroll flex gap-6 px-6 h-full overflow-x-auto overflow-y-hidden">
           {/* New Orders */}
           <div className="w-80 flex-shrink-0 bg-gray-100 rounded-lg p-4 overflow-y-auto kanban-list h-full">
