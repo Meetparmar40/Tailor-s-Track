@@ -72,7 +72,7 @@ export default function Navbar() {
         {/* Navigation */}
         <nav
           className={`flex flex-col gap-2 flex-1 w-full ${
-            collapsed ? "items-center" : ""
+            collapsed ? "items-center justify-items-center" : ""
           }`}
         >
           <a href="/" className={getNavItemClasses("/")}>
@@ -89,7 +89,6 @@ export default function Navbar() {
           </a>
         </nav>
 
-        {/* Add Buttons (Desktop only, hide when collapsed) */}
         {/* Add Buttons */}
         <div className="hidden lg:flex flex-col gap-3 mb-6 px-2">
           {!collapsed ? (
@@ -116,7 +115,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-2 md:hidden z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-items items-center py-2 md:hidden z-50">
         <a
           href="/"
           className={`flex flex-col items-center transition-colors duration-200 ${

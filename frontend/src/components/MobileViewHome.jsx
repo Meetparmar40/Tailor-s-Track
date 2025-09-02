@@ -1,5 +1,5 @@
 import { useState } from "react";
-import CustomerCard from "./CustomerCard";
+import OrderCardDashboard from "./OrderCardDashboard";
 
 export default function MobileViewHome({userName, orders = []}) {
   const [activeTab, setActiveTab] = useState(0); // 0=new, 1=urgent, 2=repair, 3=done
@@ -35,7 +35,7 @@ export default function MobileViewHome({userName, orders = []}) {
         {orders
           .filter((o) => o.tag === tabs[activeTab].tag)
           .map((o) => (
-            <CustomerCard key={o.id} {...o} />
+            <OrderCardDashboard key={o.id} {...o} />
           ))}
 
         {/* Empty state */}

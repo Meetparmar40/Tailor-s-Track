@@ -1,4 +1,4 @@
-import CustomerCard from "./CustomerCard";
+import OrderCardDashboard from "./OrderCardDashboard";
 import DashboardHeader from "./DashboardHeader";
 import { useEffect } from "react";
 import { useSidebar } from "../context/SidebarContext.jsx";
@@ -76,7 +76,7 @@ export default function DextopViewHome({ userName, orders = [] }) {
               {orders
                 .filter((o) => o.tag === 0)
                 .map((o) => (
-                  <CustomerCard key={o.id} {...o} />
+                  <OrderCardDashboard key={o.id} {...o} />
                 ))}
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function DextopViewHome({ userName, orders = [] }) {
               {orders
                 .filter((o) => o.tag === 1)
                 .map((o) => (
-                  <CustomerCard key={o.id} {...o} urgent />
+                  <OrderCardDashboard key={o.id} {...o} urgent />
                 ))}
             </div>
           </div>
@@ -100,7 +100,7 @@ export default function DextopViewHome({ userName, orders = [] }) {
               {orders
                 .filter((o) => o.tag === 2)
                 .map((o) => (
-                  <CustomerCard key={o.id} {...o} repair />
+                  <OrderCardDashboard key={o.id} {...o} repair />
                 ))}
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function DextopViewHome({ userName, orders = [] }) {
               {orders
                 .filter((o) => o.tag === 3)
                 .map((o) => (
-                  <CustomerCard key={o.id} {...o} />
+                  <OrderCardDashboard key={o.id} {...o} />
                 ))}
             </div>
           </div>

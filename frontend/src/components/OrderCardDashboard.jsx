@@ -1,7 +1,7 @@
 import kurtaSvg from '../assets/icons/kurta.svg';
 import suitSvg from '../assets/icons/suit.svg';
 
-export default function CustomerCard({ id, name, date, orders, tag }) {
+export default function OrderCardDashboard({ id, name, date, orders, tag }) {
     const formatDate = (d) =>
       new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   
@@ -72,4 +72,3 @@ export default function CustomerCard({ id, name, date, orders, tag }) {
       </div>
     );
   }
-  
