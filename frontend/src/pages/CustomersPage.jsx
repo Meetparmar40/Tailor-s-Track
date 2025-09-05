@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useCustomersStore } from '../store/useCustomersStore.js';
+import CustomerDetailsModal from '../components/CustomerDetails.jsx';
 
 // Utility function to format date
 const formatDate = (dateString) => {
@@ -206,7 +207,6 @@ export default function CustomersPage() {
   const observerRef = useRef();
   const lastElementRef = useRef();
 
-  // Initial fetch
   useEffect(() => {
     fetchCustomers({ limit: 10 });
   }, [fetchCustomers]);
@@ -252,7 +252,6 @@ export default function CustomersPage() {
   const handleCustomerClick = (customer) => {
     setSelectedCustomer(customer);
     console.log('Customer clicked:', customer);
-    // TODO: Navigate to customer details page or open modal
   };
 
   return (
@@ -348,51 +347,16 @@ export default function CustomersPage() {
           </div>
         )}
 
-        {/* Customer Detail Preview (for demo) */}
+        {/* Customer Detail */}
         {selectedCustomer && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedCustomer(null)}>
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">Customer Details</h3>
-                <button 
-                  onClick={() => setSelectedCustomer(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="text-center mb-6">
-                <div className="w-20 h-20 bg-black text-white rounded-2xl flex items-center justify-center font-bold text-2xl mx-auto mb-4">
-                  {getInitials(selectedCustomer.name)}
-                </div>
-                <h4 className="text-xl font-bold text-gray-900">{selectedCustomer.name}</h4>
-                <p className="text-gray-600">{selectedCustomer.phone}</p>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h5 className="font-semibold text-gray-900 mb-2">Order Summary</h5>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Current Orders:</span>
-                      <span className="font-medium text-black ml-2">{selectedCustomer.current_orders || 0}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Monthly Orders:</span>
-                      <span className="font-medium text-black ml-2">{selectedCustomer.total_monthly_orders || 0}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <button className="w-full bg-black text-white py-3 rounded-xl hover:bg-gray-800 transition-colors">
-                  View Full Details & Measurements
-                </button>
-              </div>
-            </div>
-          </div>
+          <CustomerDetailsModal
+            customer={selectedCustomer}
+            onClose={() => setSelectedCustomer(null)}
+            onEdit={(customer) => {
+              console.log('Edit customer:', customer);
+              // TODO: Implement edit customer functionality
+            }}
+          />
         )}
       </div>
     </div>

@@ -36,7 +36,7 @@ app.use(async (req, res, next) => {
             }
             return;
         }
-        else if (decision.results.some(isSpoofedBot)){
+        else if (decision.results.some(result => result.reason.isBot() && result.reason.spoofed)){
             return res.status(403).json({ error: "Access denied: Spoofed bot detected." });
         }
         next();

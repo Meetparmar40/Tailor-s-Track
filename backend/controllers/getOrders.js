@@ -9,12 +9,12 @@ export const getOrders = async (req, res) => {
             SELECT o.*, 
                     c.name, 
                     c.phone,  
-                    c.gender,
+                    c.gender
             FROM orders o
             JOIN customers c ON o.customer_id = c.id
             WHERE o.user_id = ${user_id}
-                AND o.id = ${order_id}
-            LIMIT 1;
+                AND o.customer_id = ${customer_id}
+            ORDER BY o.order_date DESC;
         `;
         if (orders.length === 0) {
             return res.status(404).json({ success: false, message: "Orders for the customer not found"});

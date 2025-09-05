@@ -22,9 +22,10 @@ router.post("/updateRecord/:user_id/:customer_id/:measurement_id", updateRecord)
 router.post("/createUser", createUser);
 
 router.get("/getAllOrders/:user_id", getAllOrders);
-router.get("/getOrders/:user_id/:order_id", getOrders);
+router.get("/getOrders/:user_id/:customer_id", getOrders);
+router.get("/getMeasurements/:user_id/:customer_id", getRecords);
 router.get("/getAllCustomers/:user_id", getAllCustomers);
-router.post("createOrder/:user_id/:customer_id", createOrder);
+router.post("/createOrder/:user_id/:customer_id", createOrder);
 router.post("/updateOrder/:user_id/:order_id", updateOrder);
 
 export default router; 
