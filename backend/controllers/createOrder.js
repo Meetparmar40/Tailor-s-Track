@@ -10,7 +10,7 @@ export const createOrder = async (req, res) => {
         )
         VALUES (
             ${customer_id},
-            ${user_id}
+            ${user_id},
             ${type},
             ${quantity},
             ${status || "in_progress"},

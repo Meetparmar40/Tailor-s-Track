@@ -87,9 +87,18 @@ async function initDB(){
                 quantity SMALLINT NOT NULL DEFAULT 1,
                 status TEXT DEFAULT 'in_progress',
                 order_date TIMESTAMP DEFAULT now(),
-                notes TEXT
+                notes TEXT,
+                tag INTEGER DEFAULT 0
             );
         `;
+
+        // Add tag column if it doesn't exist (for existing tables)
+        try {
+            await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tag INTEGER DEFAULT 0;`;
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log("Tag column might already exist:", error.message);
+        }
         console.log("Database Initialized Successfully");
         
     } catch (error) {
