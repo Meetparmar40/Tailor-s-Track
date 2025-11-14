@@ -26,7 +26,7 @@ export function NavMain({
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
-          <Collapsible
+          (item.title == "Settings") ? (<Collapsible
             key={item.title}
             asChild
             defaultOpen={item.isActive}
@@ -35,7 +35,16 @@ export function NavMain({
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton tooltip={item.title}>
                   {item.icon && <item.icon />}
-                  <span>{item.title}</span>
+                  {
+                    item.url ? (
+                      <a href={item.url}>
+                      <span>{item.title}</span>
+                      </a>
+                      ) : (
+                        <span>{item.title}</span>
+                      )
+                  }
+                  
                   <ChevronRight
                     className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>
@@ -54,7 +63,17 @@ export function NavMain({
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>
-          </Collapsible>
+          </Collapsible>) : (
+
+            <SidebarMenuItem key={item.title} >
+              <SidebarMenuButton tooltip={item.title}>
+                {item.icon && <item.icon />}
+                  <a href={item.url}>
+                    <span>{item.title}</span>
+                  </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )
         ))}
       </SidebarMenu>
     </SidebarGroup>

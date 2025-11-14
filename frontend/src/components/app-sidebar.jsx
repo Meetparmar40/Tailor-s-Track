@@ -22,7 +22,6 @@ import {
   useSidebar
 } from "@/components/ui/sidebar"
 
-// To do : fetch orders
 const data = {
   user: {
     name: "shadcn",
@@ -32,58 +31,40 @@ const data = {
   navMain: [
     {
       title: "Home",
-      url: "#",
+      url: "/",
       icon: House,
       isActive: true,
-      items: [
-        {
-          title: "New Orders",
-          url: "#",
-        },
-        {
-          title: "In Progress",
-          url: "#",
-        },
-        {
-          title: "Repair",
-          url: "#",
-        },
-        {
-          title: "Done",
-          url: "#",
-        },
-      ],
     },
     {
       title: "Customers",
-      url: "#",
+      url: "/customers",
       icon: Contact,
     },
     {
       title: "Measurements",
-      url: "#",
+      url: "/measurements",
       icon: Ruler,
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: Settings2,
       items: [
         {
           title: "General",
-          url: "#",
+          url: "/settings",
         },
         {
           title: "Team",
-          url: "#",
+          url: "/settings/team",
         },
         {
           title: "Billing",
-          url: "#",
+          url: "/settings/billing",
         },
         {
           title: "Limits",
-          url: "#",
+          url: "/settings/limits",
         },
       ],
     },

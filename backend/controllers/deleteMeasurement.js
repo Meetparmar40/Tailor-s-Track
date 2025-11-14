@@ -1,5 +1,5 @@
 import {sql} from "../config/db.js";
-export const deleteRecord = async (req, res) => {
+export const deleteMeasurement = async (req, res) => {
     const { user_id, customer_id, measurement_id } = req.params;
     try {
         await sql`
@@ -16,9 +16,9 @@ export const deleteRecord = async (req, res) => {
                 WHERE id = ${customer_id};
             `;
         }
-        res.status(200).json({ success: true, message: "Record deleted successfully" });
+        res.status(200).json({ success: true, message: "Measurement deleted successfully" });
     } catch (error) {
-        console.log("Error while deleting Record : ", error);
+        console.log("Error while deleting Measurement : ", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

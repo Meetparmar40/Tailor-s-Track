@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
 
-/**
- * Hook to check if the JavaScript is loaded.
- *
- * @returns - True if the JavaScript is loaded, false otherwise.
- */
 export function useJsLoaded() {
   const [loaded, setLoaded] = useState(false);
 

@@ -403,7 +403,7 @@ export function KanbanBoardColumnTitle({
   return (
     <h2
       className={cn(
-        'text-muted-foreground inline-flex items-center text-sm font-medium',
+        'text-muted-foreground inline-flex gap-2 items-center text-sm font-medium',
         className
       )}
       ref={ref}
@@ -452,7 +452,7 @@ export function KanbanBoardColumnList({
 }) {
   return (
     <ul
-      className={cn('min-h-0.5 flex-grow overflow-y-auto', className)}
+      className={cn('min-h-0.5 flex-grow overflow-y-auto gap-2', className)}
       ref={ref}
       {...props} />
   );

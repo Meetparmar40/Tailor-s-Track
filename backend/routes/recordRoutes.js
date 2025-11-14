@@ -1,31 +1,40 @@
 import express from "express";
-import { createRecord } from "../controllers/createRecord.js";
-import { deleteRecord } from "../controllers/deleteRecord.js";
-import { getRecords } from "../controllers/getRecords.js";
-import { getRecord } from "../controllers/getRecord.js";
+import { createMeasurement } from "../controllers/createMeasurement.js";
+import { deleteMeasurement } from "../controllers/deleteMeasurement.js";
+import { getMeasurements } from "../controllers/getMeasurements.js";
+import { getAllMeasurements } from "../controllers/getAllMeasurements.js";
+import { getMeasurement } from "../controllers/getMeasurement.js";
 import { createUser } from "../controllers/createUser.js";
 import { getAllOrders } from "../controllers/getAllOrders.js"
 import { getOrders } from "../controllers/getOrders.js"
-import { updateRecord } from "../controllers/updateRecord.js";
+import { updateMeasurement } from "../controllers/updateMeasurement.js";
 import { createOrder } from "../controllers/createOrder.js";
 import { updateOrder } from "../controllers/updateOrder.js";
+import { deleteOrder } from "../controllers/deleteOrder.js";
 import { getAllCustomers } from "../controllers/getAllCustomers.js";
+import { updateCustomer } from "../controllers/updateCustomer.js";
+import { deleteCustomer } from "../controllers/deleteCustomer.js";
 
 const router = express.Router();
 
-router.post("/createRecord/:user_id/:customer_id", createRecord);
-router.get("/getRecords/:user_id/:customer_id", getRecords);
-router.delete("/deleteRecord/:user_id/:customer_id/:measurement_id", deleteRecord);
-router.get("/getRecord/:user_id/:customer_id/:measurement_id", getRecord);
-router.post("/updateRecord/:user_id/:customer_id/:measurement_id", updateRecord)
+router.post("/createMeasurement/:user_id/:customer_id", createMeasurement);
+router.post("/addMeasurement/:user_id/:customer_id", createMeasurement); // Alias for frontend compatibility
+router.get("/getAllMeasurements/:user_id", getAllMeasurements);
+router.get("/getMeasurements/:user_id/:customer_id", getMeasurements);
+router.delete("/deleteMeasurement/:user_id/:customer_id/:measurement_id", deleteMeasurement);
+router.get("/getMeasurement/:user_id/:customer_id/:measurement_id", getMeasurement);
+router.put("/updateMeasurement/:user_id/:customer_id/:measurement_id", updateMeasurement);
 
 router.post("/createUser", createUser);
 
 router.get("/getAllOrders/:user_id", getAllOrders);
 router.get("/getOrders/:user_id/:customer_id", getOrders);
-router.get("/getMeasurements/:user_id/:customer_id", getRecords);
-router.get("/getAllCustomers/:user_id", getAllCustomers);
 router.post("/createOrder/:user_id/:customer_id", createOrder);
 router.post("/updateOrder/:user_id/:order_id", updateOrder);
+router.delete("/deleteOrder/:user_id/:order_id", deleteOrder);
+
+router.get("/getAllCustomers/:user_id", getAllCustomers);
+router.put("/updateCustomer/:user_id/:customer_id", updateCustomer);
+router.delete("/deleteCustomer/:user_id/:customer_id", deleteCustomer);
 
 export default router; 

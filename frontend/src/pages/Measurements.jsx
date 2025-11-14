@@ -1,14 +1,11 @@
 import React from 'react';
+import Header from "@/components/header"
 
-export default function OrdersPage() {
+export default function Measurements() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="mx-8 my-2">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-2xl font-bold text-black">Orders</h1>
-        <p className="text-gray-600 mt-1">Manage and track all your orders</p>
-      </div>
-      
+      <Header />
       {/* Main Content Area */}
       <div className="p-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

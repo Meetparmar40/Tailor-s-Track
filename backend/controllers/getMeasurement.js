@@ -1,5 +1,5 @@
 import {sql} from "../config/db.js";
-export const getRecord = async (req, res) => {
+export const getMeasurement = async (req, res) => {
     const { user_id, customer_id, measurement_id } = req.params;
     try {
         const records = await sql`

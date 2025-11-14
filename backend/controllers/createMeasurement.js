@@ -1,5 +1,5 @@
 import {sql} from "../config/db.js";
-export const createRecord = async (req, res) => {
+export const createMeasurement = async (req, res) => {
     const { user_id, customer_id } = req.params;
     const { type, measurement } = req.body;
 
@@ -14,13 +14,19 @@ export const createRecord = async (req, res) => {
             return res.status(404).json({ success: false, message: "Customer not found for this user" });
         }
 
-        await sql`
+        const [newMeasurement] = await sql`
             INSERT INTO measurements (customer_id, type, data)
-            VALUES (${customer_id}, ${type}, ${measurement});
+            VALUES (${customer_id}, ${type}, ${measurement})
+            RETURNING *;
         `;
-        res.status(201).json({ success: true, message: "Record created successfully" });
+        
+        res.status(201).json({ 
+            success: true, 
+            data: newMeasurement,
+            message: "Measurement created successfully" 
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
-        console.log("Error in createRecord", error);
+        console.log("Error in createMeasurement", error);
     }
 };

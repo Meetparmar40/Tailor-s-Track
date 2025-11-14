@@ -8,11 +8,13 @@ import {
   LogOut,
   Edit2,
 } from "lucide-react";
+import Header from "@/components/header"
 
-export default function UserProfile() {
+export default function SettingsPage() {
   return (
-    <div className="flex-1 min-h-screen bg-gray-50">
+    <div className="flex-1 min-h-screen">
       {/* Main Content */}
+      <Header />
       <main className="flex-1 p-6 md:p-12">
         <div className="max-w-3xl mx-auto bg-white shadow-md rounded-xl p-6">
           {/* Profile Image */}

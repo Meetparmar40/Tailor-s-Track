@@ -1,8 +1,8 @@
 import {sql} from "../config/db.js";
-export const getRecords = async (req, res) => {
+export const getMeasurements = async (req, res) => {
     const { user_id, customer_id } = req.params;
     try {
-        const records = await sql`
+        const Measurements = await sql`
             SELECT m.*
             FROM measurements AS m
             INNER JOIN customers AS c
@@ -11,9 +11,9 @@ export const getRecords = async (req, res) => {
             AND m.customer_id = ${customer_id}
             ORDER BY m.created_at DESC;
         `;
-        res.status(200).json({success : true, data : records}); 
+        res.status(200).json({success : true, data : Measurements}); 
     } catch (error) {
-        console.log("Error in getRecords", error);
+        console.log("Error in getMeasurements", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
