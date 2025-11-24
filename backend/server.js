@@ -18,15 +18,17 @@ app.use(morgan("dev"));
 
 const PORT = process.env.PORT || 3001;
 
+app.set("eTag", false)
+
 app.use(async (req, res, next) => {
     try {
         const decision = await aj.protect(req, { requested: 1 });
-        // console.log("Arcjet decision:", decision);
 
         if (decision.isDenied()) {
             if (decision.reason.isBot()) {
                 return res.status(403).json({ error: "Access denied: Bot activity detected." });
-            } else if (decision.reason.isRateLimit()) {
+            } else 
+            if (decision.reason.isRateLimit()) {
                 return res.status(429).json({ error: "Too many requests" });
             } else {
                 return res.status(403).json({ error: "Access denied." });

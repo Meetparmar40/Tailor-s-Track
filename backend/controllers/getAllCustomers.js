@@ -10,7 +10,7 @@ export const getAllCustomers = async (req, res) => {
 
     if (lastDate) {
       query = await sql`
-        SELECT id, name, phone, notes, created_at
+        SELECT id, name, phone, email, notes, created_at
         FROM customers
         WHERE user_id = ${user_id}
           AND created_at < ${lastDate}
@@ -19,7 +19,7 @@ export const getAllCustomers = async (req, res) => {
       `;
     } else {
       query = await sql`
-        SELECT id, name, phone, notes, created_at
+        SELECT id, name, phone, email, notes, created_at
         FROM customers
         WHERE user_id = ${user_id}
         ORDER BY created_at DESC

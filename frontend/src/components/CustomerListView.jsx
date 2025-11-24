@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { User, Package, Ruler } from "lucide-react";
+import { Package, Ruler } from "lucide-react";
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from "date-fns";
 import { Spinner, SpinnerContainer } from "@/components/ui/spinner.jsx";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar.jsx";
 import { useOrdersStore } from "@/store/useOrdersStore.js";
 import { useMeasurementsStore } from "@/store/useMeasurementsStore.js";
 
@@ -28,6 +29,16 @@ export default function CustomerListView({ customers, loading, onCustomerSelect 
     });
     
     return sortedOrders[0].order_date;
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "??";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const groupedCustomers = useMemo(() => {
@@ -82,47 +93,50 @@ export default function CustomerListView({ customers, loading, onCustomerSelect 
   const renderCustomerCard = (customer) => (
     <div
       key={customer.id}
-      className="flex items-center justify-between p-4 border rounded-lg bg-background cursor-pointer hover:bg-accent/50 transition-colors"
+      className="group flex items-center justify-between p-4 border rounded-lg bg-card hover:shadow-md hover:border-primary/20 transition-all duration-200 cursor-pointer gap-3"
       onClick={() => onCustomerSelect(customer)}
     >
-      <div className="flex items-center gap-4 flex-1">
-        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
-          <User className="w-6 h-6" />
-        </div>
-        <div className="flex-1">
-          <p className="font-semibold text-lg">{customer.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {customer.phone || "No phone number"}
+      {/* Left: Avatar & Info */}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <Avatar className="h-10 w-10 border border-border shrink-0">
+          <AvatarFallback className="bg-primary/10 text-primary font-medium">
+            {getInitials(customer.name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 overflow-hidden">
+          <p className="font-bold text-foreground truncate">{customer.name}</p>
+          <p className="text-sm text-muted-foreground truncate">
+            {customer.phone || "No phone"}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-6 text-sm">
-        <div className="text-center">
-          <div className="flex items-center gap-1 text-muted-foreground mb-1">
-            <Package className="w-4 h-4" />
-            <span className="text-xs">Orders</span>
-          </div>
-          <p className="font-semibold text-lg">{getOrderCount(customer.id)}</p>
+      {/* Middle: Stats Pills */}
+      <div className="hidden md:flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/40 border border-transparent group-hover:border-border/50 transition-colors">
+          <Package className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium text-foreground">
+            {getOrderCount(customer.id)} <span className="hidden lg:inline">Orders</span>
+          </span>
         </div>
         
-        <div className="text-center">
-          <div className="flex items-center gap-1 text-muted-foreground mb-1">
-            <Ruler className="w-4 h-4" />
-            <span className="text-xs">Measurements</span>
-          </div>
-          <p className="font-semibold text-lg">{getMeasurementCount(customer.id)}</p>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/40 border border-transparent group-hover:border-border/50 transition-colors">
+          <Ruler className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium text-foreground">
+            {getMeasurementCount(customer.id)} <span className="hidden lg:inline">Measurements</span>
+          </span>
         </div>
+      </div>
 
-        <div className="text-center min-w-[100px]">
-          <p className="text-xs text-muted-foreground mb-1">Last Order</p>
-          <p className="font-medium">
-            {getLastOrderDate(customer.id)
-              ? format(new Date(getLastOrderDate(customer.id)), "MMM d, yyyy")
-              : "No orders"
-            }
-          </p>
-        </div>
+      {/* Right: Last Order Date */}
+      <div className="text-right shrink-0">
+        <p className="text-xs text-muted-foreground mb-0.5">Last Order</p>
+        <p className="text-sm font-medium text-foreground">
+          {getLastOrderDate(customer.id)
+            ? format(new Date(getLastOrderDate(customer.id)), "MMM d, yyyy")
+            : "-"
+          }
+        </p>
       </div>
     </div>
   );
@@ -136,17 +150,18 @@ export default function CustomerListView({ customers, loading, onCustomerSelect 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {Object.entries(groupedCustomers).map(([key, groupCustomers]) => {
         if (groupCustomers.length === 0) return null;
 
         return (
           <div key={key} className="space-y-3">
-            <div className="flex items-center gap-2 px-2">
-              <h3 className="font-semibold text-lg text-foreground">
+            {/* Group Header */}
+            <div className="flex items-center gap-3 pb-2 border-b border-border">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
                 {groupLabels[key]}
               </h3>
-              <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+              <span className="px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground rounded-full">
                 {groupCustomers.length}
               </span>
             </div>
@@ -160,8 +175,12 @@ export default function CustomerListView({ customers, loading, onCustomerSelect 
 
       {customers.length === 0 && (
         <div className="py-12 text-center text-muted-foreground">
-          <User className="w-16 h-16 mx-auto mb-4 opacity-20" />
-          <p className="text-lg">No customers found</p>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
+            <Avatar className="w-8 h-8 opacity-20">
+              <AvatarFallback>?</AvatarFallback>
+            </Avatar>
+          </div>
+          <p className="text-lg font-medium text-foreground">No customers found</p>
           <p className="text-sm">Add your first customer to get started</p>
         </div>
       )}

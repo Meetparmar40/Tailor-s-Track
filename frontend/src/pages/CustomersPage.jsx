@@ -5,7 +5,7 @@ import { useMeasurementsStore } from "../store/useMeasurementsStore.js";
 
 import Header from "@/components/header.jsx";
 import CustomerListView from "@/components/CustomerListView.jsx";
-import SheetView from "@/components/layout/SheetView.jsx";
+import SheetViewWrapper from "@/components/layout/SheetView/SheetViewWrapper.jsx";
 
 export default function CustomersPage() {
   const { customers, fetchCustomers, fetchMoreCustomers, loading, hasMore } = useCustomersStore();
@@ -36,12 +36,11 @@ export default function CustomersPage() {
   function handleSheetClose() {
     setSelectedCustomer(null);
     setIsCreatingCustomer(false);
-    // Refresh customers after potential changes
     fetchCustomers({ limit: 20 });
   }
 
   return (
-    <div className="mx-8 my-2">
+    <div className="mx-4 md:mx-8 my-2">
       <Header 
         title="Customers" 
         description="Manage your customers" 
@@ -54,24 +53,11 @@ export default function CustomersPage() {
           onCustomerSelect={handleCustomerSelect}
         />
         
-        {/* Sheet for viewing existing customers */}
-        {selectedCustomer && (
-          <SheetView
+        <SheetViewWrapper
             onOpenChange={handleSheetClose}
-            open={!!selectedCustomer}
+            open={handleCustomerSelect}
             customer={selectedCustomer}
-            mode="view"
           />
-        )}
-        
-        {/* Sheet for creating new customers */}
-        {isCreatingCustomer && (
-          <SheetView
-            onOpenChange={handleSheetClose}
-            open={isCreatingCustomer}
-            mode="createCustomer"
-          />
-        )}
       </div>
     </div>
   );

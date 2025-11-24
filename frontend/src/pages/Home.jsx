@@ -6,7 +6,7 @@ import { useViewStore } from "../hooks/use-view-store.js";
 import Header from "@/components/header.jsx";
 import OrderListView from "@/components/OrderListView.jsx";
 import Kanbanboard from "@/components/KanbanBoard.jsx";
-import SheetView from "@/components/layout/SheetView.jsx";
+import SheetViewWrapper from "@/components/layout/SheetView/SheetViewWrapper.jsx";
 
 export default function HomePage() {
 
@@ -15,8 +15,6 @@ export default function HomePage() {
   const { orders, fetchOrders, fetchMoreOrders, loading, hasMore } = useOrdersStore();
   const { view, setView } = useViewStore();
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [defaultTag, setDefaultTag] = useState(0);
   
   //effects
   useEffect(() => {
@@ -57,13 +55,13 @@ export default function HomePage() {
     setSelectedOrder(null);
   }
   return (
-    <div className="mx-8 my-2">
+    <div className="mx-8 my-2 flex flex-col h-[calc(100vh-1rem)]">
         <Header 
           title="Dashboard" 
           description="Manage your orders Efficiently" 
           onAddNew={handleAddNew}
         />
-        <div>
+        <div className="flex-1 min-h-0">
           {
             view === "kanban" ? (
               <Kanbanboard 
@@ -84,25 +82,11 @@ export default function HomePage() {
             )
           }
           
-          {/* Sheet for viewing existing orders */}
-          {selectedOrder && (
-            <SheetView
+          <SheetViewWrapper
               onOpenChange={handleSheetClose}
               open={!!selectedOrder}
               order={selectedOrder}
-              mode="view"
             />
-          )}
-          
-          {/* Sheet for creating new orders */}
-          {isCreatingOrder && (
-            <SheetView
-              onOpenChange={handleSheetClose}
-              open={isCreatingOrder}
-              mode="createOrder"
-              defaultTag={defaultTag}
-            />
-          )}
         </div>
     </div>
   );
