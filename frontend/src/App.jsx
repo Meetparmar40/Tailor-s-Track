@@ -4,6 +4,8 @@ import Home from "./pages/Home";
 import SettingsPage from "./pages/SettingsPage";
 import Login from "./pages/Login.jsx";
 import CustomersPage from "./pages/CustomersPage.jsx";
+import CustomerDetailsPage from "./pages/CustomerDetailsPage.jsx";
+import OrderDetailsPage from "./pages/OrderDetailsPage.jsx";
 import Measurements from "./pages/Measurements.jsx";
 import { AppSidebar } from "./components/app-sidebar";
 import { SidebarInnerContent } from "./components/SidebarInnerContent";
@@ -36,6 +38,8 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/customers" element={<CustomersPage />} />
+              <Route path="/customers/:id" element={<CustomerDetailsPage />} />
+              <Route path="/orders/:id" element={<OrderDetailsPage />} />
               <Route path="/measurements" element={<Measurements />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>

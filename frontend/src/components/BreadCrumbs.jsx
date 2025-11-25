@@ -1,14 +1,6 @@
-// components/Breadcrumbs.jsx
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { useLocation, Link } from "react-router-dom";
+import { useOrdersStore } from "../store/useOrdersStore";
+import { useCustomersStore } from "../store/useCustomersStore";
 
 const LABELS = {
   "": "Home",
@@ -16,37 +8,58 @@ const LABELS = {
   settings: "Settings",
   measurements: "Measurements",
   login: "Login",
+  orders: "Orders"
 };
 
 export default function BreadCrumbs() {
-  const { pathname } = useLocation();
-  const segments = pathname.split("/").filter(Boolean);
+  const location = useLocation();
+  const { currentOrder } = useOrdersStore();
+  const { currentCustomer } = useCustomersStore();
 
-  const crumbs = [{ name: LABELS[""] || "Home", path: "/" }];
+  const segments = location.pathname.split("/").filter(Boolean);
+  let crumbs = [];
   let acc = "";
-  segments.forEach((seg) => {
+
+  // Add Home
+  crumbs.push({ name: "Home", path: "/" });
+
+  segments.forEach((seg, index) => {
     acc += `/${seg}`;
-    crumbs.push({ name: LABELS[seg] || decodeURIComponent(seg), path: acc });
+    let name = LABELS[seg] || decodeURIComponent(seg);
+
+    // Check if this segment is an ID
+    // Logic: if previous segment was "orders", this might be order ID
+    // if previous segment was "customers", this might be customer ID
+    const prevSeg = segments[index - 1];
+
+    if (prevSeg === "orders" && currentOrder && currentOrder.id.toString() === seg) {
+      // Display descriptive name for order
+      name = `${currentOrder.type} for ${currentOrder.customer_name}`;
+    } else if (prevSeg === "customers" && currentCustomer && currentCustomer.id.toString() === seg) {
+      // Display customer name
+      name = currentCustomer.name;
+    }
+
+    crumbs.push({ name, path: acc });
   });
 
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        {crumbs.map((c, i) => (
-          <React.Fragment key={c.path}>
-            <BreadcrumbItem>
-              {i < crumbs.length - 1 ? (
-                <BreadcrumbLink asChild>
-                  <Link className="text-muted-foreground" to={c.path}>{c.name}</Link>
-                </BreadcrumbLink>
-              ) : (
-                <BreadcrumbPage className="text-muted-foreground">{c.name}</BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
-            {i < crumbs.length - 1 && <BreadcrumbSeparator />}
-          </React.Fragment>
-        ))}
-      </BreadcrumbList>
-    </Breadcrumb>
+    <nav className="flex items-center text-sm text-muted-foreground mb-4">
+      {crumbs.map((crumb, index) => {
+        const isLast = index === crumbs.length - 1;
+        return (
+          <div key={crumb.path} className="flex items-center">
+            {index > 0 && <span className="mx-2">/</span>}
+            {isLast ? (
+              <span className="font-medium text-foreground">{crumb.name}</span>
+            ) : (
+              <Link to={crumb.path} className="hover:text-foreground transition-colors">
+                {crumb.name}
+              </Link>
+            )}
+          </div>
+        );
+      })}
+    </nav>
   );
 }

@@ -1,4 +1,4 @@
-import {create} from "zustand";
+import { create } from "zustand";
 import axios from "axios";
 
 const BASE_URL = `http://${window.location.hostname}:3000`;
@@ -13,6 +13,7 @@ export const useOrdersStore = create((set, get) => ({
     hasMore: true,
     isLoadingMore: false,
     lastDate: null,
+    currentOrder: null,
 
     fetchOrders: async ({ limit = 10, lastDate, tag } = {}) => {
         set({ loading: true });
@@ -77,7 +78,6 @@ export const useOrdersStore = create((set, get) => ({
             const url = `${BASE_URL}/api/getOrders/${userId}/${customerId}`;
             const response = await axios.get(url);
             const ordersData = response.data.data;
-            // Don't overwrite the global orders array, just return the data
             set({ error: null });
             return { success: true, data: ordersData };
         } catch (error) {
@@ -90,39 +90,52 @@ export const useOrdersStore = create((set, get) => ({
         }
     },
 
+    fetchOrder: async (orderId) => {
+        if (!orderId) {
+            set({ error: "Order Id is needed" });
+            return { success: false, error: "Order Id is needed" };
+        }
+        set({ loading: true });
+
+        try {
+            const url = `${BASE_URL}/api/getOrder/${userId}/${orderId}`;
+            const response = await axios.get(url);
+            const orderData = response.data.data;
+            set({ error: null, currentOrder: orderData });
+            return { success: true, data: orderData };
+        } catch (error) {
+            const status = error?.response?.status;
+            if (status === 429) set({ error: "rate limit exceeded, try again after some time" });
+            else set({ error: "something went wrong" });
+            return { success: false, error: "Failed to fetch order" };
+        } finally {
+            set({ loading: false });
+        }
+    },
+
     addOrder: async (customerId, orderData) => {
         set({ loading: true, error: null });
-
         try {
             const url = `${BASE_URL}/api/createOrder/${userId}/${customerId}`;
             const response = await axios.post(url, orderData);
-            
             const newOrder = response.data.data;
             set(state => ({
                 orders: [newOrder, ...state.orders],
                 loading: false,
                 error: null
             }));
-            
             return { success: true, data: newOrder };
         } catch (error) {
             const status = error?.response?.status;
             let errorMessage = "Failed to create order";
-            
-            if (status === 429) {
-                errorMessage = "Rate limit exceeded, try again after some time";
-            } else if (status === 400) {
-                errorMessage = "Invalid order data provided";
-            } else if (status === 404) {
-                errorMessage = "Customer not found";
-            } else if (error?.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            }
-            
+            if (status === 429) errorMessage = "Rate limit exceeded, try again after some time";
+            else if (status === 400) errorMessage = "Invalid order data provided";
+            else if (status === 404) errorMessage = "Customer not found";
+            else if (error?.response?.data?.message) errorMessage = error.response.data.message;
             set({ error: errorMessage, loading: false });
             return { success: false, error: errorMessage };
         } finally {
-            set({ loading: false });   
+            set({ loading: false });
         }
     },
 
@@ -131,38 +144,25 @@ export const useOrdersStore = create((set, get) => ({
             set({ error: "Order ID is required" });
             return { success: false, error: "Order ID is required" };
         }
-
         set({ loading: true, error: null });
-
         try {
             const url = `${BASE_URL}/api/updateOrder/${userId}/${orderId}`;
             const response = await axios.post(url, orderData);
-            
             const updatedOrder = response.data.data;
-            
             set(state => ({
-                orders: state.orders.map(order => 
-                    order.id === orderId ? updatedOrder : order
-                ),
+                orders: state.orders.map(order => order.id === orderId ? updatedOrder : order),
                 loading: false,
-                error: null
+                error: null,
+                currentOrder: state.currentOrder && state.currentOrder.id === orderId ? updatedOrder : state.currentOrder
             }));
-            
             return { success: true, data: updatedOrder };
         } catch (error) {
             const status = error?.response?.status;
             let errorMessage = "Failed to update order";
-            
-            if (status === 429) {
-                errorMessage = "Rate limit exceeded, try again after some time";
-            } else if (status === 400) {
-                errorMessage = "Invalid order data provided";
-            } else if (status === 404) {
-                errorMessage = "Order not found";
-            } else if (error?.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            }
-            
+            if (status === 429) errorMessage = "Rate limit exceeded, try again after some time";
+            else if (status === 400) errorMessage = "Invalid order data provided";
+            else if (status === 404) errorMessage = "Order not found";
+            else if (error?.response?.data?.message) errorMessage = error.response.data.message;
             set({ error: errorMessage, loading: false });
             return { success: false, error: errorMessage };
         } finally {
@@ -185,29 +185,21 @@ export const useOrdersStore = create((set, get) => ({
             set({ error: "Order ID is required" });
             return { success: false, error: "Order ID is required" };
         }
-
         try {
             const url = `${BASE_URL}/api/deleteOrder/${userId}/${orderId}`;
             const response = await axios.delete(url);
-            
             set(state => ({
                 orders: state.orders.filter(order => order.id !== orderId),
-                error: null
+                error: null,
+                currentOrder: state.currentOrder && state.currentOrder.id === orderId ? null : state.currentOrder
             }));
-            
             return { success: true, data: response.data };
         } catch (error) {
             const status = error?.response?.status;
             let errorMessage = "Failed to delete order";
-            
-            if (status === 429) {
-                errorMessage = "Rate limit exceeded, try again after some time";
-            } else if (status === 404) {
-                errorMessage = "Order not found";
-            } else if (error?.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            }
-            
+            if (status === 429) errorMessage = "Rate limit exceeded, try again after some time";
+            else if (status === 404) errorMessage = "Order not found";
+            else if (error?.response?.data?.message) errorMessage = error.response.data.message;
             set({ error: errorMessage });
             return { success: false, error: errorMessage };
         }

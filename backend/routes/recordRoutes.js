@@ -14,6 +14,8 @@ import { deleteOrder } from "../controllers/deleteOrder.js";
 import { getAllCustomers } from "../controllers/getAllCustomers.js";
 import { updateCustomer } from "../controllers/updateCustomer.js";
 import { deleteCustomer } from "../controllers/deleteCustomer.js";
+import { getOrder } from "../controllers/getOrder.js";
+import { getCustomer } from "../controllers/getCustomer.js";
 
 const router = express.Router();
 
@@ -36,5 +38,7 @@ router.delete("/deleteOrder/:user_id/:order_id", deleteOrder);
 router.get("/getAllCustomers/:user_id", getAllCustomers);
 router.put("/updateCustomer/:user_id/:customer_id", updateCustomer);
 router.delete("/deleteCustomer/:user_id/:customer_id", deleteCustomer);
+router.get("/getOrder/:user_id/:order_id", getOrder);
+router.get("/getCustomer/:user_id/:customer_id", getCustomer);
 
 export default router; 

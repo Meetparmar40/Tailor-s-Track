@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { useOrdersStore } from "../store/useOrdersStore.js";
 import { useViewStore } from "../hooks/use-view-store.js";
+import { useNavigate } from "react-router-dom";
 
 import Header from "@/components/header.jsx";
 import OrderListView from "@/components/OrderListView.jsx";
 import Kanbanboard from "@/components/KanbanBoard.jsx";
-import SheetViewWrapper from "@/components/layout/SheetView/SheetViewWrapper.jsx";
 
 export default function HomePage() {
 
@@ -14,8 +14,8 @@ export default function HomePage() {
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
   const { orders, fetchOrders, fetchMoreOrders, loading, hasMore } = useOrdersStore();
   const { view, setView } = useViewStore();
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  
+  const navigate = useNavigate();
+
   //effects
   useEffect(() => {
     fetchOrders({ limit: 15 });
@@ -32,62 +32,45 @@ export default function HomePage() {
   }
 
   function handleAddOrder(columnTag) {
-    setDefaultTag(columnTag);
-    setIsCreatingOrder(true);
-    setSelectedOrder(null);
+    navigate("/orders/new");
   }
 
   function handleViewDetails(order) {
-    setSelectedOrder(order);
-    setIsCreatingOrder(false);
-  }
-
-  function handleSheetClose() {
-    setSelectedOrder(null);
-    setIsCreatingOrder(false);
-    // Refresh orders after potential changes
-    fetchOrders({ limit: 15 });
+    navigate(`/orders/${order.id}`);
   }
 
   function handleAddNew() {
-    setDefaultTag(0); // Default to "New" tag
-    setIsCreatingOrder(true);
-    setSelectedOrder(null);
+    navigate("/orders/new");
   }
+
   return (
     <div className="mx-8 my-2 flex flex-col h-[calc(100vh-1rem)]">
-        <Header 
-          title="Dashboard" 
-          description="Manage your orders Efficiently" 
-          onAddNew={handleAddNew}
-        />
-        <div className="flex-1 min-h-0">
-          {
-            view === "kanban" ? (
-              <Kanbanboard 
-                orders={orders}
-                loading={loading}
-                hasMore={hasMore}
-                fetchMoreOrders={fetchMoreOrders}
-                handleDrop={handleDrop}
-                handleAddOrder={handleAddOrder}
-                onOrderSelect={handleViewDetails}
-              />
-            ) : (
-              <OrderListView 
-                orders={orders}
-                loading={loading}
-                onOrderSelect={handleViewDetails}
-              />
-            )
-          }
-          
-          <SheetViewWrapper
-              onOpenChange={handleSheetClose}
-              open={!!selectedOrder}
-              order={selectedOrder}
+      <Header
+        title="Dashboard"
+        description="Manage your orders Efficiently"
+        onAddNew={handleAddNew}
+      />
+      <div className="flex-1 min-h-0">
+        {
+          view === "kanban" ? (
+            <Kanbanboard
+              orders={orders}
+              loading={loading}
+              hasMore={hasMore}
+              fetchMoreOrders={fetchMoreOrders}
+              handleDrop={handleDrop}
+              handleAddOrder={handleAddOrder}
+              onOrderSelect={handleViewDetails}
             />
-        </div>
+          ) : (
+            <OrderListView
+              orders={orders}
+              loading={loading}
+              onOrderSelect={handleViewDetails}
+            />
+          )
+        }
+      </div>
     </div>
   );
 }
