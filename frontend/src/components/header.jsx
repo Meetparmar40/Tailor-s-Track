@@ -25,18 +25,18 @@ export default function Header({ title, description, onAddNew }) {
             </div>
             <div className="text-accent-foreground text-2xl">{description}</div>
             <div className="flex items-center my-4 w-full">
-                {showViewToggle && <ViewToggle setView={setView} view={view} />}
+                {showViewToggle && <ViewToggle setView={setView} view={view} className="hidden sm:flex" />}
 
                 <div className="flex gap-x-2 ml-auto">
                     <SearchBar />
                     <Button  variant="outline" >
                         <Share2 />
-                        <p className="mb-1">Share</p>
+                        <p>Share</p>
                     </Button>
                     
                     <Button onClick={onAddNew}>
-                        <span className="mb-1">+</span>
-                        <span className="mb-1">Add New</span>
+                        <span>+</span>
+                        <span>Add New</span>
                     </Button>
                 </div>
             </div>

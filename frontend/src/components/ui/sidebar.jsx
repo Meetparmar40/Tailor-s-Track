@@ -134,7 +134,7 @@ SidebarProvider = React.forwardRef((
     </SidebarContext.Provider>
   );
 })
-
+ 
 const Sidebar = React.forwardRef((
   {
     side = "left",
