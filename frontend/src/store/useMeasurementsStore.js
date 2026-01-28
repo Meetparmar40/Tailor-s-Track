@@ -1,16 +1,21 @@
 import { create } from "zustand";
 import axios from "axios";
 
-const BASE_URL = `http://${window.location.hostname}:3000`;
-const userId = "81a48fba-7155-4e50-8355-897840cde5c2";
+const BASE_URL = import.meta.env.MODE === "development" 
+  ? `http://${window.location.hostname}:3000` 
+  : '';
 
 export const useMeasurementsStore = create((set, get) => ({
     measurements: [],
-    allMeasurements: [], // Global measurements for all customers
+    allMeasurements: [],
     loading: false,
     error: null,
 
-    fetchAllMeasurements: async ({ limit = 1000 } = {}) => {
+    fetchAllMeasurements: async (userId, { limit = 1000 } = {}) => {
+        if (!userId) {
+            set({ error: "User not authenticated" });
+            return;
+        }
         set({ loading: true });
 
         try {
@@ -29,7 +34,11 @@ export const useMeasurementsStore = create((set, get) => ({
         }
     },
 
-    fetchMeasurementsOfCustomer: async (customerId) => {
+    fetchMeasurementsOfCustomer: async (userId, customerId) => {
+        if (!userId) {
+            set({ error: "User not authenticated" });
+            return;
+        }
         if (!customerId) {
             set({ error: "Customer Id is needed" });
             return;
@@ -49,7 +58,10 @@ export const useMeasurementsStore = create((set, get) => ({
         }
     },
 
-    addMeasurement: async (customerId, measurementData) => {
+    addMeasurement: async (userId, customerId, measurementData) => {
+        if (!userId) {
+            return { success: false, error: "User not authenticated" };
+        }
         try {
             const url = `${BASE_URL}/api/addMeasurement/${userId}/${customerId}`;
             const response = await axios.post(url, measurementData);
@@ -69,70 +81,50 @@ export const useMeasurementsStore = create((set, get) => ({
             return { success: false, error: errorMessage };
         }
     },
-    
 
-    updateMeasurement: async (customerId, measurementId, measurementData) => {
+    updateMeasurement: async (userId, customerId, measurementId, measurementData) => {
+        if (!userId) {
+            return { success: false, error: "User not authenticated" };
+        }
         try {
             const url = `${BASE_URL}/api/updateMeasurement/${userId}/${customerId}/${measurementId}`;
             const response = await axios.put(url, measurementData);
             const updatedMeasurement = response.data.data;
-            const updatedMeasurements = get().measurements.map(m => 
-                m.id === measurementId ? updatedMeasurement : m
-            );
-            const updatedAllMeasurements = get().allMeasurements.map(m => 
-                m.id === measurementId ? updatedMeasurement : m
-            );
-            set({ 
-                measurements: updatedMeasurements,
-                allMeasurements: updatedAllMeasurements
+            set({
+                measurements: get().measurements.map(m => 
+                    m.id === measurementId ? updatedMeasurement : m
+                ),
+                allMeasurements: get().allMeasurements.map(m => 
+                    m.id === measurementId ? updatedMeasurement : m
+                )
             });
             return { success: true, data: updatedMeasurement };
         } catch (error) {
             const status = error?.response?.status;
-            let errorMessage = "Failed to update measurement";
-            if (status === 429) errorMessage = "Rate limit exceeded, try again after some time";
-            else if (error?.response?.data?.message) errorMessage = error.response.data.message;
-            
-            set({ error: errorMessage });
-            return { success: false, error: errorMessage };
+            if (status === 429) return { success: false, error: "rate limit exceeded" };
+            return { success: false, error: "Failed to update measurement" };
         }
     },
 
-    deleteMeasurement: async (customerId, measurementId) => {
-        if (!customerId || !measurementId) {
-            set({ error: "Customer ID and Measurement ID are required" });
-            return { success: false, error: "Customer ID and Measurement ID are required" };
+    deleteMeasurement: async (userId, customerId, measurementId) => {
+        if (!userId) {
+            return { success: false, error: "User not authenticated" };
         }
-
         try {
             const url = `${BASE_URL}/api/deleteMeasurement/${userId}/${customerId}/${measurementId}`;
-            const response = await axios.delete(url);
-            
-            set(state => ({
-                measurements: state.measurements.filter(measurement => measurement.id !== measurementId),
-                allMeasurements: state.allMeasurements.filter(measurement => measurement.id !== measurementId),
-                error: null
-            }));
-            
-            return { success: true, data: response.data };
+            await axios.delete(url);
+            set({
+                measurements: get().measurements.filter(m => m.id !== measurementId),
+                allMeasurements: get().allMeasurements.filter(m => m.id !== measurementId)
+            });
+            return { success: true };
         } catch (error) {
             const status = error?.response?.status;
-            let errorMessage = "Failed to delete measurement";
-            
-            if (status === 429) {
-                errorMessage = "Rate limit exceeded, try again after some time";
-            } else if (status === 404) {
-                errorMessage = "Measurement not found";
-            } else if (error?.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            }
-            
-            set({ error: errorMessage });
-            return { success: false, error: errorMessage };
+            if (status === 429) return { success: false, error: "rate limit exceeded" };
+            return { success: false, error: "Failed to delete measurement" };
         }
     },
 
-    clearMeasurements: () => {
-        set({ measurements: [], error: null });
-    }
+    clearMeasurements: () => set({ measurements: [] }),
+    clearError: () => set({ error: null }),
 }));

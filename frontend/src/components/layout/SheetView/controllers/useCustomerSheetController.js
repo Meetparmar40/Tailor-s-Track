@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useCustomersStore } from "@/store/useCustomersStore";
 import { useOrdersStore } from "@/store/useOrdersStore";
 import { useMeasurementsStore } from "@/store/useMeasurementsStore";
+import { useAuthContext } from "@/components/AuthProvider";
 import { create } from "zustand";
 
 export default function useCustomerSheetController({ customer, onClose }) {
   const customersStore = useCustomersStore();
   const ordersStore = useOrdersStore();
   const measurementsStore = useMeasurementsStore();
+  const { userId } = useAuthContext();
 
   const [localCustomer, setLocalCustomer] = useState(customer || null);
   const [customerForm, setCustomerForm] = useState({
@@ -39,22 +41,23 @@ export default function useCustomerSheetController({ customer, onClose }) {
       notes: customer?.notes || "",
     });
 
-    if (customer?.id) {
+    if (customer?.id && userId) {
       setLoadingOrders(true);
-      ordersStore.fetchOrdersOfCustomer(customer.id).then(res => {
+      ordersStore.fetchOrdersOfCustomer(userId, customer.id).then(res => {
         if (res?.data) setCustomerOrders(res.data);
       }).finally(() => setLoadingOrders(false));
 
-      measurementsStore.fetchMeasurementsOfCustomer(customer.id).catch(()=>{});
+      measurementsStore.fetchMeasurementsOfCustomer(userId, customer.id).catch(()=>{});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customer]);
+  }, [customer, userId]);
 
   const handleSaveAll = async () => {
+    if (!userId) return;
     setIsSaving(true);
     try {
       if (!localCustomer?.id) {
-        const r = await customersStore.addCustomer(customerForm);
+        const r = await customersStore.addCustomer(userId, customerForm);
         if (r?.success) {
           setLocalCustomer(r.data);
           setCustomerForm({
@@ -67,7 +70,7 @@ export default function useCustomerSheetController({ customer, onClose }) {
           onClose?.();
         }
       } else {
-        const r = await customersStore.updateCustomer(localCustomer.id, customerForm);
+        const r = await customersStore.updateCustomer(userId, localCustomer.id, customerForm);
         if (r?.success) {
           setLocalCustomer(r.data);
           setCustomerForm({
@@ -98,19 +101,20 @@ export default function useCustomerSheetController({ customer, onClose }) {
 
   const openDeleteConfirmation = (type, id, name) => {
     // simple immediate delete (replace with modal flow if you have UI)
-    if (type === "customer") {
-      customersStore.deleteCustomer(id).then(res => {
+    if (type === "customer" && userId) {
+      customersStore.deleteCustomer(userId, id).then(res => {
         if (res?.success) onClose?.();
       }).catch(e => console.error(e));
     }
   };
 
   const deleteOrder = (orderId) => {
-    ordersStore.deleteOrder(orderId).then(res => {
+    if (!userId) return;
+    ordersStore.deleteOrder(userId, orderId).then(res => {
       if (res?.success) {
         // Refresh orders list
         if (customer?.id) {
-          ordersStore.fetchOrdersOfCustomer(customer.id).then(r => {
+          ordersStore.fetchOrdersOfCustomer(userId, customer.id).then(r => {
             if (r?.data) setCustomerOrders(r.data);
           });
         }
@@ -139,12 +143,12 @@ export default function useCustomerSheetController({ customer, onClose }) {
   };
 
   const createOrder = async () => {
-    if (!localCustomer?.id) return false;
+    if (!localCustomer?.id || !userId) return false;
     setIsSaving(true);
     try {
-      const res = await ordersStore.addOrder(localCustomer.id, orderForm);
+      const res = await ordersStore.addOrder(userId, localCustomer.id, orderForm);
       if (res?.success) {
-        const r = await ordersStore.fetchOrdersOfCustomer(localCustomer.id);
+        const r = await ordersStore.fetchOrdersOfCustomer(userId, localCustomer.id);
         if (r?.data) setCustomerOrders(r.data);
         return true;
       }
@@ -157,11 +161,12 @@ export default function useCustomerSheetController({ customer, onClose }) {
   };
 
   const updateOrder = async (orderId) => {
+    if (!userId) return false;
     setIsSaving(true);
     try {
-      const res = await ordersStore.updateOrders(orderId, orderForm);
+      const res = await ordersStore.updateOrders(userId, orderId, orderForm);
       if (res?.success) {
-        const r = await ordersStore.fetchOrdersOfCustomer(localCustomer.id);
+        const r = await ordersStore.fetchOrdersOfCustomer(userId, localCustomer.id);
         if (r?.data) setCustomerOrders(r.data);
         return true;
       }
@@ -174,25 +179,24 @@ export default function useCustomerSheetController({ customer, onClose }) {
   };
 
   const deleteMeasurement = (measurementId) => {
-    measurementsStore.deleteMeasurement(measurementId).then(res => {
+    if (!userId || !customer?.id) return;
+    measurementsStore.deleteMeasurement(userId, customer.id, measurementId).then(res => {
       if (res?.success) {
         // Refresh measurements list
-        if (customer?.id) {
-          measurementsStore.fetchMeasurementsOfCustomer(customer.id).catch(()=>{});
-        }
+        measurementsStore.fetchMeasurementsOfCustomer(userId, customer.id).catch(()=>{});
       }
     }).catch(e => console.error(e));
   };
 
   const createMeasurement = async (payload) => {
-    if (customer?.id) {
-      await measurementsStore.addMeasurement(customer.id, payload);
+    if (customer?.id && userId) {
+      await measurementsStore.addMeasurement(userId, customer.id, payload);
     }
   };
 
   const updateMeasurement = async (measurementId, payload) => {
-    if (customer?.id) {
-      await measurementsStore.updateMeasurement(customer.id, measurementId, payload);
+    if (customer?.id && userId) {
+      await measurementsStore.updateMeasurement(userId, customer.id, measurementId, payload);
     }
   };
   return {

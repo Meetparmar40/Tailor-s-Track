@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { useOrdersStore } from "../store/useOrdersStore.js";
 import { useViewStore } from "../hooks/use-view-store.js";
+import { useAuthContext } from "../components/AuthProvider.jsx";
 import { useNavigate } from "react-router-dom";
 
 import Header from "@/components/header.jsx";
@@ -14,12 +15,15 @@ export default function HomePage() {
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
   const { orders, fetchOrders, fetchMoreOrders, loading, hasMore } = useOrdersStore();
   const { view, setView } = useViewStore();
+  const { userId } = useAuthContext();
   const navigate = useNavigate();
 
   //effects
   useEffect(() => {
-    fetchOrders({ limit: 15 });
-  }, [fetchOrders]);
+    if (userId) {
+      fetchOrders(userId, { limit: 15 });
+    }
+  }, [userId, fetchOrders]);
 
   useEffect(() => {
     if (isMobile) setView("list");
@@ -57,7 +61,7 @@ export default function HomePage() {
               orders={orders}
               loading={loading}
               hasMore={hasMore}
-              fetchMoreOrders={fetchMoreOrders}
+              fetchMoreOrders={() => fetchMoreOrders(userId)}
               handleDrop={handleDrop}
               handleAddOrder={handleAddOrder}
               onOrderSelect={handleViewDetails}

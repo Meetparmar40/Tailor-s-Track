@@ -54,18 +54,21 @@ app.use((err, req, res, next) => {
 
 async function initDB() {
     try {
-        await sql`
+         await sql`
             CREATE TABLE IF NOT EXISTS users (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                id TEXT PRIMARY KEY,
                 email TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT NOW()
+                first_name TEXT,
+                last_name TEXT,
+                image_url TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
             );
         `;
         await sql`
             CREATE TABLE IF NOT EXISTS customers (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
                 name TEXT NOT NULL,
                 phone TEXT,
                 notes TEXT,
@@ -87,7 +90,7 @@ async function initDB() {
             CREATE TABLE IF NOT EXISTS orders (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
-                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 type TEXT NOT NULL,
                 quantity SMALLINT NOT NULL DEFAULT 1,
                 status TEXT DEFAULT 'in_progress',

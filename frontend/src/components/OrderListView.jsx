@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner, SpinnerContainer } from "@/components/ui/spinner.jsx";
 import { useOrdersStore } from "../store/useOrdersStore";
+import { useAuthContext } from "./AuthProvider";
 import {
   CircleAlert,
   CircleDotDashed,
@@ -31,10 +32,13 @@ const columns = [
 export default function OrderListView({ orders, loading, onOrderSelect }) {
   // We'll need a function from the store to update the tag
   const { updateOrderTag } = useOrdersStore();
+  const { userId } = useAuthContext();
 
   const handleTagChange = (orderId, newTag) => {
     // The newTag from the Select component will be a string, so we parse it
-    updateOrderTag(orderId, parseInt(newTag, 10));
+    if (userId) {
+      updateOrderTag(userId, orderId, parseInt(newTag, 10));
+    }
   };
 
   const getColumnData = (tag) => columns.find(c => c.key === tag);

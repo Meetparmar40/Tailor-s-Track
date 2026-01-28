@@ -3,11 +3,13 @@ import { measurementTemplates } from "../constants";
 import { useOrdersStore } from "@/store/useOrdersStore";
 import { useCustomersStore } from "@/store/useCustomersStore";
 import { useMeasurementsStore } from "@/store/useMeasurementsStore";
+import { useAuthContext } from "@/components/AuthProvider";
 
 export default function useOrderSheetController({ order, defaultTag = 0, onClose }) {
   const ordersStore = useOrdersStore();
   const customersStore = useCustomersStore();
   const measurementsStore = useMeasurementsStore();
+  const { userId } = useAuthContext();
 
   const [stateOrder, setStateOrder] = useState(order || null);
   const [orderForm, setOrderForm] = useState({
@@ -38,16 +40,17 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
       due_date: order?.due_date ? order.due_date.split("T")[0] : "",
     });
 
-    if (order?.customer_id) {
+    if (order?.customer_id && userId) {
       if (!customersStore.customers?.find(c => c.id === order.customer_id)) {
-        customersStore.fetchCustomers({ limit: 100 });
+        customersStore.fetchCustomers(userId, { limit: 100 });
       }
-      measurementsStore.fetchMeasurementsOfCustomer(order.customer_id).catch(()=>{});
+      measurementsStore.fetchMeasurementsOfCustomer(userId, order.customer_id).catch(()=>{});
     }
 
-  }, [order]);
+  }, [order, userId]);
 
   const handleSaveAll = async () => {
+    if (!userId) return;
     setIsSaving(true);
     try {
       // create order
@@ -57,7 +60,7 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
           console.error("Customer ID is required to create an order");
           return;
         }
-        const res = await ordersStore.addOrder(customerId, orderForm);
+        const res = await ordersStore.addOrder(userId, customerId, orderForm);
         if (res?.success) {
           setStateOrder(res.data);
           setEditing({ order: false, measurement: editing.measurement });
@@ -65,7 +68,7 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
         }
       //update order
       } else {
-        const res = await ordersStore.updateOrders(stateOrder.id, orderForm);
+        const res = await ordersStore.updateOrders(userId, stateOrder.id, orderForm);
         if (res?.success) {
           setStateOrder(res.data);
           setEditing({ order: false, measurement: editing.measurement });
@@ -93,8 +96,8 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
   const openCustomerSheet = (customerId) => {
     // assume higher-level router or modal controller will open CustomerSheetView
     // for now, we expose a simple behavior: fetch and set local customer. Caller may integrate navigation.
-    if (!customersStore.customers?.find(c => c.id === customerId)) {
-      customersStore.fetchCustomers({ limit: 100 });
+    if (!customersStore.customers?.find(c => c.id === customerId) && userId) {
+      customersStore.fetchCustomers(userId, { limit: 100 });
     }
     // integrate with app: call onClose to close this and open CustomerSheetView or trigger route
     onClose?.();
@@ -103,35 +106,34 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
 
   const openDeleteConfirmation = (type, id, name) => {
     // delegate to stores: or raise event; for simplicity call delete and close
-    if (type === "order") {
-      ordersStore.deleteOrder(id).then(res => {
+    if (type === "order" && userId) {
+      ordersStore.deleteOrder(userId, id).then(res => {
         if (res?.success) onClose?.();
       }).catch(e => console.error(e));
     }
   };
 
   const deleteMeasurement = (measurementId) => {
-    measurementsStore.deleteMeasurement(measurementId).then(res => {
+    if (!userId || !activeCustomerId) return;
+    measurementsStore.deleteMeasurement(userId, activeCustomerId, measurementId).then(res => {
       if (res?.success) {
         // Refresh measurements list
-        if (activeCustomerId) {
-          measurementsStore.fetchMeasurementsOfCustomer(activeCustomerId).catch(()=>{});
-        }
+        measurementsStore.fetchMeasurementsOfCustomer(userId, activeCustomerId).catch(()=>{});
       }
     }).catch(e => console.error(e));
   };
 
   const createMeasurement = async (payload) => {
-    if (activeCustomerId) {
-      await measurementsStore.addMeasurement(activeCustomerId, payload);
+    if (activeCustomerId && userId) {
+      await measurementsStore.addMeasurement(userId, activeCustomerId, payload);
     } else {
-      console.error("No customer ID found for creating measurement");
+      console.error("No customer ID or user ID found for creating measurement");
     }
   };
 
   const updateMeasurement = async (measurementId, payload) => {
-    if (activeCustomerId) {
-      await measurementsStore.updateMeasurement(activeCustomerId, measurementId, payload);
+    if (activeCustomerId && userId) {
+      await measurementsStore.updateMeasurement(userId, activeCustomerId, measurementId, payload);
     }
   };
 
