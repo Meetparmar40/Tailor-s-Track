@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { measurementTemplates } from "../constants";
 import { useOrdersStore } from "@/store/useOrdersStore";
 import { useCustomersStore } from "@/store/useCustomersStore";
 import { useMeasurementsStore } from "@/store/useMeasurementsStore";
 import { useAuthContext } from "@/components/AuthProvider";
+import { ORDER_STATUSES } from "../orderConstants.js";
 
 export default function useOrderSheetController({ order, defaultTag = 0, onClose }) {
   const ordersStore = useOrdersStore();
@@ -16,10 +16,9 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
     customer_id: order?.customer_id || null,
     type: order?.type || "",
     quantity: order?.quantity || 1,
-    status: order?.status || "",
+    status: order?.status || ORDER_STATUSES.NEW,
     notes: order?.notes || "",
     tag: order?.tag ?? defaultTag,
-    due_date: order?.due_date ? order.due_date.split("T")[0] : "",
   });
 
   const [editing, setEditing] = useState({ order: false, measurement: false });
@@ -34,10 +33,9 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
       customer_id: order?.customer_id || null,
       type: order?.type || "",
       quantity: order?.quantity || 1,
-      status: order?.status || "",
+      status: order?.status || ORDER_STATUSES.NEW,
       notes: order?.notes || "",
       tag: order?.tag ?? defaultTag,
-      due_date: order?.due_date ? order.due_date.split("T")[0] : "",
     });
 
     if (order?.customer_id && userId) {
@@ -68,7 +66,7 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
         }
       //update order
       } else {
-        const res = await ordersStore.updateOrders(userId, stateOrder.id, orderForm);
+        const res = await ordersStore.updateOrder(userId, stateOrder.id, orderForm);
         if (res?.success) {
           setStateOrder(res.data);
           setEditing({ order: false, measurement: editing.measurement });
@@ -85,27 +83,21 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
     setOrderForm({
       type: stateOrder?.type || "",
       quantity: stateOrder?.quantity || 1,
-      status: stateOrder?.status || "",
+      status: stateOrder?.status || ORDER_STATUSES.NEW,
       notes: stateOrder?.notes || "",
       tag: stateOrder?.tag ?? defaultTag,
-      due_date: stateOrder?.due_date ? stateOrder.due_date.split("T")[0] : "",
     });
     setEditing({ order: false, measurement: false });
   };
 
   const openCustomerSheet = (customerId) => {
-    // assume higher-level router or modal controller will open CustomerSheetView
-    // for now, we expose a simple behavior: fetch and set local customer. Caller may integrate navigation.
     if (!customersStore.customers?.find(c => c.id === customerId) && userId) {
       customersStore.fetchCustomers(userId, { limit: 100 });
     }
-    // integrate with app: call onClose to close this and open CustomerSheetView or trigger route
     onClose?.();
-    // parent should display Customer sheet.
   };
 
   const openDeleteConfirmation = (type, id, name) => {
-    // delegate to stores: or raise event; for simplicity call delete and close
     if (type === "order" && userId) {
       ordersStore.deleteOrder(userId, id).then(res => {
         if (res?.success) onClose?.();
@@ -117,7 +109,6 @@ export default function useOrderSheetController({ order, defaultTag = 0, onClose
     if (!userId || !activeCustomerId) return;
     measurementsStore.deleteMeasurement(userId, activeCustomerId, measurementId).then(res => {
       if (res?.success) {
-        // Refresh measurements list
         measurementsStore.fetchMeasurementsOfCustomer(userId, activeCustomerId).catch(()=>{});
       }
     }).catch(e => console.error(e));

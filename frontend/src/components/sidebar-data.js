@@ -1,11 +1,8 @@
 import {
   House,
   Contact,
-  Ruler,
-  Frame,
-  Map,
-  PieChart,
   Settings2,
+  User,
 } from "lucide-react"
 
 export const data = {
@@ -27,49 +24,15 @@ export const data = {
       icon: Contact,
     },
     {
-      title: "Measurements",
-      url: "/measurements",
-      icon: Ruler,
+      title: "Account",
+      url: "/account",
+      icon: User,
     },
     {
       title: "Settings",
       url: "/settings",
       icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "/settings",
-        },
-        {
-          title: "Team",
-          url: "/settings/team",
-        },
-        {
-          title: "Billing",
-          url: "/settings/billing",
-        },
-        {
-          title: "Limits",
-          url: "/settings/limits",
-        },
-      ],
     },
   ],
-  Orders: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
+  Orders: [],
 }

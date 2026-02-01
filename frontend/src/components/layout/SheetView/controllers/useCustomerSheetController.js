@@ -3,7 +3,7 @@ import { useCustomersStore } from "@/store/useCustomersStore";
 import { useOrdersStore } from "@/store/useOrdersStore";
 import { useMeasurementsStore } from "@/store/useMeasurementsStore";
 import { useAuthContext } from "@/components/AuthProvider";
-import { create } from "zustand";
+import { ORDER_STATUSES } from "../orderConstants.js";
 
 export default function useCustomerSheetController({ customer, onClose }) {
   const customersStore = useCustomersStore();
@@ -22,9 +22,8 @@ export default function useCustomerSheetController({ customer, onClose }) {
   const [orderForm, setOrderForm] = useState({
     type: "",
     quantity: 1,
-    status: "",
+    status: ORDER_STATUSES.NEW,
     notes: "",
-    due_date: "",
   });
 
   const [customerOrders, setCustomerOrders] = useState([]);
@@ -126,9 +125,8 @@ export default function useCustomerSheetController({ customer, onClose }) {
     setOrderForm({
       type: "",
       quantity: 1,
-      status: "",
+      status: ORDER_STATUSES.NEW,
       notes: "",
-      due_date: "",
     });
   };
 
@@ -136,9 +134,8 @@ export default function useCustomerSheetController({ customer, onClose }) {
     setOrderForm({
       type: order.type || "",
       quantity: order.quantity || 1,
-      status: order.status || "",
+      status: order.status || ORDER_STATUSES.IN_PROGRESS,
       notes: order.notes || "",
-      due_date: order.due_date ? order.due_date.split("T")[0] : "",
     });
   };
 
@@ -164,7 +161,7 @@ export default function useCustomerSheetController({ customer, onClose }) {
     if (!userId) return false;
     setIsSaving(true);
     try {
-      const res = await ordersStore.updateOrders(userId, orderId, orderForm);
+      const res = await ordersStore.updateOrder(userId, orderId, orderForm);
       if (res?.success) {
         const r = await ordersStore.fetchOrdersOfCustomer(userId, localCustomer.id);
         if (r?.data) setCustomerOrders(r.data);
@@ -199,6 +196,7 @@ export default function useCustomerSheetController({ customer, onClose }) {
       await measurementsStore.updateMeasurement(userId, customer.id, measurementId, payload);
     }
   };
+
   return {
     state: {
       localCustomer,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCustomersStore } from "../store/useCustomersStore";
 import useCustomerSheetController from "../components/layout/SheetView/controllers/useCustomerSheetController";
@@ -10,6 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, ChevronDown, ChevronUp, Edit2, Trash2, Check, X, ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MEASUREMENT_TEMPLATES, CLOTH_TYPES } from "../components/layout/SheetView/measurementTemplates.js";
+import { 
+  ORDER_STATUSES, 
+  STATUS_DISPLAY_LABELS, 
+  getStatusDisplayLabel,
+  getTypeDisplayLabel 
+} from "../components/layout/SheetView/orderConstants.js";
 import { Spinner, SpinnerContainer } from "@/components/ui/spinner.jsx";
 
 export default function CustomerDetailsPage() {
@@ -37,22 +43,48 @@ export default function CustomerDetailsPage() {
         )
     }
 
-    return <CustomerDetailsContent customer={customer} navigate={navigate} />;
+    return <CustomerDetailsContent customer={customer} navigate={navigate} isNew={isNew} />;
 }
 
-function CustomerDetailsContent({ customer, navigate }) {
-    const customerCtrl = useCustomerSheetController({ customer, onClose: () => navigate(-1) });
+function CustomerDetailsContent({ customer, navigate, isNew }) {
+    const customerCtrl = useCustomerSheetController({ customer, onClose: () => navigate("/customers") });
     const { state, handlers, isSaving, displayName } = customerCtrl;
 
     const [expandedOrderId, setExpandedOrderId] = useState(null);
     const [expandedMeasurementId, setExpandedMeasurementId] = useState(null);
-    const [editingCustomer, setEditingCustomer] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState(isNew);
     const [editingOrder, setEditingOrder] = useState(null);
     const [editingMeasurement, setEditingMeasurement] = useState(null);
     const [addingOrder, setAddingOrder] = useState(null);
     const [isAddingMeasurement, setIsAddingMeasurement] = useState(false);
     const [measureType, setMeasureType] = useState(CLOTH_TYPES.SHIRT);
     const [measureValues, setMeasureValues] = useState({});
+
+    // Refs for auto-focus
+    const customerNameRef = useRef(null);
+    const orderTypeRef = useRef(null);
+    const measurementTypeRef = useRef(null);
+
+    // Auto-focus customer name when editing starts
+    useEffect(() => {
+        if (editingCustomer && customerNameRef.current) {
+            customerNameRef.current.focus();
+        }
+    }, [editingCustomer]);
+
+    // Auto-focus order type dropdown when adding order
+    useEffect(() => {
+        if (addingOrder && orderTypeRef.current) {
+            orderTypeRef.current.focus();
+        }
+    }, [addingOrder]);
+
+    // Auto-focus measurement type dropdown when adding measurement
+    useEffect(() => {
+        if (isAddingMeasurement && measurementTypeRef.current) {
+            measurementTypeRef.current.focus();
+        }
+    }, [isAddingMeasurement]);
 
     const resetMeasurementForm = () => {
         setMeasureType(CLOTH_TYPES.SHIRT);
@@ -120,6 +152,7 @@ function CustomerDetailsContent({ customer, navigate }) {
                                     <div>
                                         <p className="text-xs text-muted-foreground mb-1">Name</p>
                                         <Input
+                                            ref={customerNameRef}
                                             value={state.customerForm.name}
                                             onChange={(e) => handlers.setCustomerForm({ name: e.target.value })}
                                             placeholder="Customer name"
@@ -186,14 +219,16 @@ function CustomerDetailsContent({ customer, navigate }) {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="flex items-center justify-between">
                         <h4 className="text-lg font-semibold">Orders</h4>
-                        <Button size="sm" onClick={() => setAddingOrder({
-                            customer_id: customer.id,
-                            type: "",
-                            quantity: 1,
-                            status: "",
-                            notes: "",
-                            due_date: ""
-                        })}>
+                        <Button size="sm" onClick={() => {
+                            handlers.prepareCreateOrder();
+                            setAddingOrder({
+                                customer_id: customer.id,
+                                type: "",
+                                quantity: 1,
+                                status: ORDER_STATUSES.NEW,
+                                notes: "",
+                            });
+                        }}>
                             <PlusCircle className="mr-2 h-3 w-3" /> New Order
                         </Button>
                     </div>
@@ -213,12 +248,14 @@ function CustomerDetailsContent({ customer, navigate }) {
                                                     value={state.orderForm.type || ""}
                                                     onValueChange={(val) => handlers.setOrderForm({ type: val })}
                                                 >
-                                                    <SelectTrigger className="h-9 text-sm">
+                                                    <SelectTrigger ref={orderTypeRef} className="h-9 text-sm">
                                                         <SelectValue placeholder="Select Type" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {Object.values(CLOTH_TYPES).map((type) => (
-                                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                            <SelectItem key={type} value={type}>
+                                                                {getTypeDisplayLabel(type)}
+                                                            </SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
@@ -228,28 +265,29 @@ function CustomerDetailsContent({ customer, navigate }) {
                                                 <Input
                                                     placeholder="Quantity"
                                                     type="number"
+                                                    min="1"
                                                     value={state.orderForm.quantity || 1}
-                                                    onChange={(e) => handlers.setOrderForm({ quantity: e.target.value })}
+                                                    onChange={(e) => handlers.setOrderForm({ quantity: parseInt(e.target.value) || 1 })}
                                                     className="text-sm"
                                                 />
                                             </div>
                                             <div>
                                                 <p className="text-xs text-muted-foreground mb-1">Status</p>
-                                                <Input
-                                                    placeholder="Status"
-                                                    value={state.orderForm.status || ""}
-                                                    onChange={(e) => handlers.setOrderForm({ status: e.target.value })}
-                                                    className="text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-muted-foreground mb-1">Due Date</p>
-                                                <Input
-                                                    type="date"
-                                                    value={state.orderForm.due_date || ""}
-                                                    onChange={(e) => handlers.setOrderForm({ due_date: e.target.value })}
-                                                    className="text-sm"
-                                                />
+                                                <Select
+                                                    value={state.orderForm.status || ORDER_STATUSES.NEW}
+                                                    onValueChange={(val) => handlers.setOrderForm({ status: val })}
+                                                >
+                                                    <SelectTrigger className="h-9 text-sm">
+                                                        <SelectValue placeholder="Select Status" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {Object.entries(STATUS_DISPLAY_LABELS).map(([value, label]) => (
+                                                            <SelectItem key={value} value={value}>
+                                                                {label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-muted-foreground mb-1">Notes</p>
@@ -292,8 +330,12 @@ function CustomerDetailsContent({ customer, navigate }) {
                                                     onClick={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
                                                 >
                                                     <div className="flex-1">
-                                                        <p className="font-medium text-sm">{o.type} — {o.quantity} items</p>
-                                                        <p className="text-xs text-muted-foreground">Status: {o.status || "—"}</p>
+                                                        <p className="font-medium text-sm">
+                                                            {getTypeDisplayLabel(o.type)} — {o.quantity} items
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Status: {getStatusDisplayLabel(o.status)}
+                                                        </p>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         {expandedOrderId === o.id ? (
@@ -310,16 +352,12 @@ function CustomerDetailsContent({ customer, navigate }) {
                                                             <>
                                                                 <div>
                                                                     <div>
-                                                                        <p className="text-xs text-muted-foreground">Due Date</p>
-                                                                        <p className="text-sm">{o.due_date ? new Date(o.due_date).toLocaleDateString() : "Not set"}</p>
-                                                                    </div>
-                                                                    <div>
                                                                         <p className="text-xs text-muted-foreground">Notes</p>
                                                                         <p className="text-sm">{o.notes || "—"}</p>
                                                                     </div>
                                                                 </div>
                                                                 <div>
-                                                                    <div className="flex gap-2">
+                                                                    <div className="flex gap-2 mt-2">
                                                                         <Button variant="ghost" size="sm" onClick={() => {
                                                                             handlers.prepareEditOrder(o);
                                                                             setEditingOrder(o);
@@ -350,7 +388,9 @@ function CustomerDetailsContent({ customer, navigate }) {
                                                                         </SelectTrigger>
                                                                         <SelectContent>
                                                                             {Object.values(CLOTH_TYPES).map((type) => (
-                                                                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                                                <SelectItem key={type} value={type}>
+                                                                                    {getTypeDisplayLabel(type)}
+                                                                                </SelectItem>
                                                                             ))}
                                                                         </SelectContent>
                                                                     </Select>
@@ -360,28 +400,29 @@ function CustomerDetailsContent({ customer, navigate }) {
                                                                     <Input
                                                                         placeholder="Quantity"
                                                                         type="number"
+                                                                        min="1"
                                                                         value={state.orderForm.quantity}
-                                                                        onChange={(e) => handlers.setOrderForm({ quantity: e.target.value })}
+                                                                        onChange={(e) => handlers.setOrderForm({ quantity: parseInt(e.target.value) || 1 })}
                                                                         className="text-sm"
                                                                     />
                                                                 </div>
                                                                 <div>
                                                                     <p className="text-xs text-muted-foreground mb-1">Status</p>
-                                                                    <Input
-                                                                        placeholder="Status"
+                                                                    <Select
                                                                         value={state.orderForm.status}
-                                                                        onChange={(e) => handlers.setOrderForm({ status: e.target.value })}
-                                                                        className="text-sm"
-                                                                    />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-xs text-muted-foreground mb-1">Due Date</p>
-                                                                    <Input
-                                                                        type="date"
-                                                                        value={state.orderForm.due_date}
-                                                                        onChange={(e) => handlers.setOrderForm({ due_date: e.target.value })}
-                                                                        className="text-sm"
-                                                                    />
+                                                                        onValueChange={(val) => handlers.setOrderForm({ status: val })}
+                                                                    >
+                                                                        <SelectTrigger className="h-9 text-sm">
+                                                                            <SelectValue placeholder="Select Status" />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            {Object.entries(STATUS_DISPLAY_LABELS).map(([value, label]) => (
+                                                                                <SelectItem key={value} value={value}>
+                                                                                    {label}
+                                                                                </SelectItem>
+                                                                            ))}
+                                                                        </SelectContent>
+                                                                    </Select>
                                                                 </div>
                                                                 <div>
                                                                     <p className="text-xs text-muted-foreground mb-1">Notes</p>
@@ -426,12 +467,12 @@ function CustomerDetailsContent({ customer, navigate }) {
                     </div>
 
                     {/* measurements list */}
-                    <div className="mt-6">
+                    <div className="mt-4">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-lg font-semibold">Measurements</h4>
                             {!isAddingMeasurement && (
                                 <Button size="sm" onClick={() => {
-                                    setMeasureType(CLOTH_TYPES.SHIRT); // Default
+                                    setMeasureType(CLOTH_TYPES.SHIRT);
                                     setMeasureValues({});
                                     setIsAddingMeasurement(true);
                                 }}>
@@ -441,7 +482,6 @@ function CustomerDetailsContent({ customer, navigate }) {
                         </div>
 
                         <div className="bg-muted/30 rounded-lg p-4 border border-muted/50">
-
                             {/* ADD NEW MEASUREMENT FORM */}
                             {isAddingMeasurement && (
                                 <div className="mb-3 bg-background rounded-md border border-border p-4 shadow-sm">
@@ -449,14 +489,16 @@ function CustomerDetailsContent({ customer, navigate }) {
                                         <p className="text-sm font-semibold">Add New Measurement</p>
                                         <Select value={measureType} onValueChange={(val) => {
                                             setMeasureType(val);
-                                            setMeasureValues({}); // Clear values on type switch
+                                            setMeasureValues({});
                                         }}>
-                                            <SelectTrigger className="w-[180px] h-8">
+                                            <SelectTrigger ref={measurementTypeRef} className="w-[180px] h-8">
                                                 <SelectValue placeholder="Select Type" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {Object.values(CLOTH_TYPES).map((type) => (
-                                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                    <SelectItem key={type} value={type}>
+                                                        {getTypeDisplayLabel(type)}
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -481,8 +523,7 @@ function CustomerDetailsContent({ customer, navigate }) {
                                             <X className="mr-1 h-3 w-3" /> Cancel
                                         </Button>
                                         <Button size="sm" onClick={() => {
-                                            // Assuming controller has createMeasurement(type, json_values)
-                                            customerCtrl.handlers.createMeasurement({
+                                            handlers.createMeasurement({
                                                 type: measureType,
                                                 measurement: measureValues
                                             });
@@ -511,10 +552,9 @@ function CustomerDetailsContent({ customer, navigate }) {
                                                     }}
                                                 >
                                                     <div className="flex-1">
-                                                        <p className="font-medium text-sm">{m.type}</p>
-                                                        {!expandedMeasurementId && expandedMeasurementId !== m.id && (
+                                                        <p className="font-medium text-sm">{getTypeDisplayLabel(m.type)}</p>
+                                                        {expandedMeasurementId !== m.id && (
                                                             <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                                                {/* Quick preview of values */}
                                                                 {Object.entries(m.data || {}).map(([k, v]) => `${k}: ${v}`).join(', ')}
                                                             </p>
                                                         )}
@@ -555,7 +595,7 @@ function CustomerDetailsContent({ customer, navigate }) {
                                                                         <X className="mr-1 h-3 w-3" /> Cancel
                                                                     </Button>
                                                                     <Button size="sm" onClick={() => {
-                                                                        customerCtrl.handlers.updateMeasurement(m.id, {
+                                                                        handlers.updateMeasurement(m.id, {
                                                                             type: m.type,
                                                                             measurement: { ...m.data, ...editingMeasurement.tempMeasurements }
                                                                         });
@@ -577,7 +617,6 @@ function CustomerDetailsContent({ customer, navigate }) {
                                                                             </div>
                                                                         ))
                                                                     ) : (
-                                                                        // Fallback for unknown types
                                                                         Object.entries(m.data || {}).map(([k, v]) => (
                                                                             <div key={k} className="flex justify-between border-b border-border/40 pb-1">
                                                                                 <span className="text-xs text-muted-foreground capitalize">{k}</span>

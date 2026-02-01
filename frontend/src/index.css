@@ -56,6 +56,9 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 240 5.9% 90%;
     --sidebar-ring: 240 5% 64.9%;
+    
+    /* Base font size for scaling */
+    --base-font-size: 14px;
   }
 
   .dark {
@@ -103,33 +106,38 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* --- THE FIX ---
-   1. Set the default (mobile-first) base size to 16px.
-      This makes 1rem = 16px on small screens.
-   */
+  /* Dynamic font sizing based on settings */
   html {
-    font-size: 16px;
+    font-size: var(--base-font-size, 14px);
   }
 
-  /* 2. On larger screens (tablet & desktop), REDUCE the base size.
-      This makes 1rem = 14px.
-      Effectively, this "zooms out" the UI on desktop, making the 
-      16px mobile view feel proportionally larger and chunkier.
-   */
-  @media (min-width: 768px) {
+  /* Responsive font size adjustments */
+  @media (max-width: 768px) {
     html {
-      font-size: 14px; /* Adjust to 13px or 15px to taste */
-    }
-  }
-  /* Alternatively, for very large screens, you can go even smaller
-   to fit more content.
-  */
-  @media (min-width: 1536px) {
-    html {
-      font-size: 13px; 
+      font-size: calc(var(--base-font-size, 14px) + 2px);
     }
   }
 
+  /* Compact mode styles */
+  .compact-mode {
+    --compact-spacing: 0.75;
+  }
+
+  .compact-mode .p-4 {
+    padding: calc(1rem * var(--compact-spacing, 1));
+  }
+
+  .compact-mode .p-6 {
+    padding: calc(1.5rem * var(--compact-spacing, 1));
+  }
+
+  .compact-mode .gap-4 {
+    gap: calc(1rem * var(--compact-spacing, 1));
+  }
+
+  .compact-mode .gap-6 {
+    gap: calc(1.5rem * var(--compact-spacing, 1));
+  }
 
   body {
     @apply bg-background text-foreground;

@@ -17,6 +17,11 @@ import { deleteCustomer } from "../controllers/deleteCustomer.js";
 import { getOrder } from "../controllers/getOrder.js";
 import { getCustomer } from "../controllers/getCustomer.js";
 import { syncUser } from "../controllers/clerkWebhook.js";
+import { getSettings } from "../controllers/getSettings.js";
+import { updateSettings } from "../controllers/updateSettings.js";
+import { getAdmins, getUserWorkspaces } from "../controllers/getAdmins.js";
+import { addAdmin, updateAdmin, removeAdmin } from "../controllers/addAdmin.js";
+import { switchWorkspace } from "../controllers/switchWorkspace.js";
 
 const router = express.Router();
 
@@ -42,5 +47,17 @@ router.put("/updateCustomer/:user_id/:customer_id", updateCustomer);
 router.delete("/deleteCustomer/:user_id/:customer_id", deleteCustomer);
 router.get("/getOrder/:user_id/:order_id", getOrder);
 router.get("/getCustomer/:user_id/:customer_id", getCustomer);
+
+// Settings routes
+router.get("/getSettings/:user_id", getSettings);
+router.put("/updateSettings/:user_id", updateSettings);
+
+// Admin management routes
+router.get("/getAdmins/:user_id", getAdmins);
+router.get("/getUserWorkspaces/:user_id", getUserWorkspaces);
+router.post("/addAdmin/:user_id", addAdmin);
+router.put("/updateAdmin/:user_id/:admin_id", updateAdmin);
+router.delete("/removeAdmin/:user_id/:admin_id", removeAdmin);
+router.post("/switchWorkspace/:user_id/:target_user_id", switchWorkspace);
 
 export default router; 

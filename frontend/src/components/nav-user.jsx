@@ -1,12 +1,14 @@
 "use client"
 
+import { useNavigate } from "react-router-dom"
+import { useClerk } from "@clerk/clerk-react"
 import {
   BadgeCheck,
   Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
-  Sparkles,
+  Settings,
+  Users,
 } from "lucide-react"
 
 import {
@@ -29,11 +31,39 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useAdminStore } from "@/store/useAdminStore"
 
 export function NavUser({
   user
 }) {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+  const { signOut } = useClerk()
+  const { clearWorkspace } = useAdminStore()
+
+  const handleLogout = async () => {
+    clearWorkspace()
+    await signOut()
+    navigate("/")
+  }
+
+  const handleAccountClick = () => {
+    navigate("/account")
+  }
+
+  const handleNotificationsClick = () => {
+    navigate("/account")
+    // You could also open a notifications panel/modal here
+  }
+
+  const handleSettingsClick = () => {
+    navigate("/settings")
+  }
+
+  const handleManageAdminsClick = () => {
+    navigate("/account")
+    // Scrolls to admin section or opens modal
+  }
 
   return (
     <SidebarMenu>
@@ -73,28 +103,28 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleAccountClick} className="cursor-pointer">
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
+              <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
+                <Settings />
+                Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleNotificationsClick} className="cursor-pointer">
                 <Bell />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={handleManageAdminsClick} className="cursor-pointer">
+                <Users />
+                Manage Admins
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
               <LogOut />
               Log out
             </DropdownMenuItem>

@@ -36,8 +36,8 @@ export default function HomePage() {
   }
 
   function handleAddOrder(columnTag) {
-    navigate("/orders/new");
-  }
+    navigate(`/orders/new?tag=${columnTag}`);
+  } 
 
   function handleViewDetails(order) {
     navigate(`/orders/${order.id}`);
@@ -71,6 +71,7 @@ export default function HomePage() {
               orders={orders}
               loading={loading}
               onOrderSelect={handleViewDetails}
+              handleAddOrder={handleAddOrder}
             />
           )
         }

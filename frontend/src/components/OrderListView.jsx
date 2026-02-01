@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Spinner, SpinnerContainer } from "@/components/ui/spinner.jsx";
 import { useOrdersStore } from "../store/useOrdersStore";
 import { useAuthContext } from "./AuthProvider";
@@ -19,6 +20,7 @@ import {
   CircleDotDashed,
   Wrench,
   CircleCheckBig,
+  Plus,
 } from "lucide-react";
 
 // This array can be shared between HomePage and this component
@@ -29,7 +31,7 @@ const columns = [
   { key: 3, title: "Done", icon: CircleCheckBig, iconColor: "#10b981" },
 ];
 
-export default function OrderListView({ orders, loading, onOrderSelect }) {
+export default function OrderListView({ orders, loading, onOrderSelect, handleAddOrder }) {
   // We'll need a function from the store to update the tag
   const { updateOrderTag } = useOrdersStore();
   const { userId } = useAuthContext();
@@ -58,15 +60,28 @@ export default function OrderListView({ orders, loading, onOrderSelect }) {
 
         return (
           <AccordionItem value={String(key)} key={key}>
-            <AccordionTrigger>
-              <div className="flex items-center gap-3">
-                <Icon color={iconColor} size={18} />
-                <span className="font-semibold">{title}</span>
-                <span className="px-2 py-1 text-xs bg-gray-100 rounded-full">
-                  {filteredOrders.length}
-                </span>
-              </div>
-            </AccordionTrigger>
+            <div className="flex items-center justify-between">
+              <AccordionTrigger className="flex-1">
+                <div className="flex items-center gap-3">
+                  <Icon color={iconColor} size={18} />
+                  <span className="font-semibold">{title}</span>
+                  <span className="px-2 py-1 text-xs bg-gray-100 rounded-full">
+                    {filteredOrders.length}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 mr-4 hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddOrder(key);
+                }}
+              >
+                <Plus size={18} />
+              </Button>
+            </div>
             <AccordionContent>
               {filteredOrders.length > 0 ? (
                 <div className="flex flex-col gap-2 pl-4">

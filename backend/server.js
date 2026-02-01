@@ -100,6 +100,31 @@ async function initDB() {
                 tag INTEGER DEFAULT 0
             );
         `;
+        await sql`
+            CREATE TABLE IF NOT EXISTS user_settings (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id TEXT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                theme TEXT DEFAULT 'light',
+                font_size TEXT DEFAULT 'medium',
+                sidebar_collapsed BOOLEAN DEFAULT false,
+                notifications_enabled BOOLEAN DEFAULT true,
+                compact_mode BOOLEAN DEFAULT false,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        `;
+        await sql`
+            CREATE TABLE IF NOT EXISTS user_admins (
+                id SERIAL PRIMARY KEY,
+                owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                admin_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                role TEXT NOT NULL DEFAULT 'admin',
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE(owner_user_id, admin_user_id)
+            );
+        `;
         try {
             await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tag INTEGER DEFAULT 0;`;
         } catch (error) {

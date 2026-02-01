@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrdersStore } from "../store/useOrdersStore";
 import useOrderSheetController from "../components/layout/SheetView/controllers/useOrderSheetController";
@@ -11,6 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Edit2, Check, X, ChevronDown, ChevronUp, PlusCircle, ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MEASUREMENT_TEMPLATES, CLOTH_TYPES } from "../components/layout/SheetView/measurementTemplates.js";
+import { 
+  ORDER_STATUSES, 
+  STATUS_DISPLAY_LABELS, 
+  getStatusDisplayLabel,
+  getTypeDisplayLabel 
+} from "../components/layout/SheetView/orderConstants.js";
 import { Spinner, SpinnerContainer } from "@/components/ui/spinner.jsx";
 
 export default function OrderDetailsPage() {
@@ -51,6 +57,24 @@ function OrderDetailsContent({ order, navigate }) {
     const [isAddingMeasurement, setIsAddingMeasurement] = useState(false);
     const [measureType, setMeasureType] = useState(CLOTH_TYPES.SHIRT);
     const [measureValues, setMeasureValues] = useState({});
+
+    // Refs for auto-focus
+    const orderTypeRef = useRef(null);
+    const measurementTypeRef = useRef(null);
+
+    // Auto-focus order type dropdown when editing starts
+    useEffect(() => {
+        if (editingOrder && orderTypeRef.current) {
+            orderTypeRef.current.focus();
+        }
+    }, [editingOrder]);
+
+    // Auto-focus measurement type dropdown when adding measurement
+    useEffect(() => {
+        if (isAddingMeasurement && measurementTypeRef.current) {
+            measurementTypeRef.current.focus();
+        }
+    }, [isAddingMeasurement]);
 
     const resetMeasurementForm = () => {
         setMeasureType(CLOTH_TYPES.SHIRT);
@@ -100,7 +124,9 @@ function OrderDetailsContent({ order, navigate }) {
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div>
                                         <p className="text-xs text-muted-foreground">Type</p>
-                                        <p className="font-medium text-primary">{state.order?.type || state.orderForm.type || "—"}</p>
+                                        <p className="font-medium text-primary">
+                                            {getTypeDisplayLabel(state.order?.type || state.orderForm.type)}
+                                        </p>
                                     </div>
 
                                     <div>
@@ -110,13 +136,8 @@ function OrderDetailsContent({ order, navigate }) {
 
                                     <div>
                                         <p className="text-xs text-muted-foreground">Status</p>
-                                        <p className="font-medium">{state.order?.status || state.orderForm.status || "not set"}</p>
-                                    </div>
-
-                                    <div>
-                                        <p className="text-xs text-muted-foreground">Due date</p>
                                         <p className="font-medium">
-                                            {state.order?.due_date ? new Date(state.order.due_date).toLocaleDateString() : (state.orderForm.due_date || "not set")}
+                                            {getStatusDisplayLabel(state.order?.status || state.orderForm.status)}
                                         </p>
                                     </div>
 
@@ -137,39 +158,51 @@ function OrderDetailsContent({ order, navigate }) {
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div>
                                         <p className="text-xs text-muted-foreground mb-1">Type</p>
-                                        <Input
+                                        <Select
                                             value={state.orderForm.type}
-                                            onChange={(e) => handlers.setOrderForm({ type: e.target.value })}
-                                            placeholder="Order type"
-                                        />
+                                            onValueChange={(val) => handlers.setOrderForm({ type: val })}
+                                        >
+                                            <SelectTrigger ref={orderTypeRef}>
+                                                <SelectValue placeholder="Select order type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Object.values(CLOTH_TYPES).map((type) => (
+                                                    <SelectItem key={type} value={type}>
+                                                        {getTypeDisplayLabel(type)}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
 
                                     <div>
                                         <p className="text-xs text-muted-foreground mb-1">Quantity</p>
                                         <Input
                                             type="number"
+                                            min="1"
                                             value={state.orderForm.quantity}
-                                            onChange={(e) => handlers.setOrderForm({ quantity: parseInt(e.target.value) })}
+                                            onChange={(e) => handlers.setOrderForm({ quantity: parseInt(e.target.value) || 1 })}
                                             placeholder="Quantity"
                                         />
                                     </div>
 
                                     <div>
                                         <p className="text-xs text-muted-foreground mb-1">Status</p>
-                                        <Input
+                                        <Select
                                             value={state.orderForm.status}
-                                            onChange={(e) => handlers.setOrderForm({ status: e.target.value })}
-                                            placeholder="Status"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <p className="text-xs text-muted-foreground mb-1">Due date</p>
-                                        <Input
-                                            type="date"
-                                            value={state.orderForm.due_date}
-                                            onChange={(e) => handlers.setOrderForm({ due_date: e.target.value })}
-                                        />
+                                            onValueChange={(val) => handlers.setOrderForm({ status: val })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Object.entries(STATUS_DISPLAY_LABELS).map(([value, label]) => (
+                                                    <SelectItem key={value} value={value}>
+                                                        {label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
 
                                     <div className="md:col-span-2">
@@ -214,7 +247,7 @@ function OrderDetailsContent({ order, navigate }) {
                             <h4 className="text-lg font-semibold">Measurements</h4>
                             {!isAddingMeasurement && (
                                 <Button size="sm" onClick={() => {
-                                    setMeasureType(CLOTH_TYPES.SHIRT); // Default
+                                    setMeasureType(CLOTH_TYPES.SHIRT);
                                     setMeasureValues({});
                                     setIsAddingMeasurement(true);
                                 }}>
@@ -234,12 +267,14 @@ function OrderDetailsContent({ order, navigate }) {
                                             setMeasureType(val);
                                             setMeasureValues({});
                                         }}>
-                                            <SelectTrigger className="w-[180px] h-8">
+                                            <SelectTrigger ref={measurementTypeRef} className="w-[180px] h-8">
                                                 <SelectValue placeholder="Select Type" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {Object.values(CLOTH_TYPES).map((type) => (
-                                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                    <SelectItem key={type} value={type}>
+                                                        {getTypeDisplayLabel(type)}
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -293,10 +328,9 @@ function OrderDetailsContent({ order, navigate }) {
                                                     }}
                                                 >
                                                     <div className="flex-1">
-                                                        <p className="font-medium text-sm">{m.type}</p>
-                                                        {!expandedMeasurementId && expandedMeasurementId !== m.id && (
+                                                        <p className="font-medium text-sm">{getTypeDisplayLabel(m.type)}</p>
+                                                        {expandedMeasurementId !== m.id && (
                                                             <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                                                {/* Quick preview of values */}
                                                                 {Object.entries(m.data || {}).map(([k, v]) => `${k}: ${v}`).join(', ')}
                                                             </p>
                                                         )}
@@ -396,11 +430,7 @@ function OrderDetailsContent({ order, navigate }) {
                     <CustomerMiniCard
                         customer={state.customerFromStore}
                         fallbackName={state.order?.customer_name}
-                        onOpenFull={() => {
-                            if (state.order?.customer_id) {
-                                navigate(`/customers/${state.order.customer_id}`);
-                            }
-                        }}
+                        onOpenFull={() => handlers.openCustomerSheet(state.order?.customer_id)}
                     />
                 </aside>
             </div>

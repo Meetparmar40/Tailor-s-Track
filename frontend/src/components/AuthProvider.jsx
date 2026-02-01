@@ -1,4 +1,4 @@
-import { useEffect, createContext, useContext, useState } from 'react'
+import { useEffect, createContext, useContext, useState, useMemo } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import axios from 'axios'
 
@@ -46,8 +46,23 @@ export function AuthProvider({ children }) {
     syncUserWithBackend()
   }, [user, isUserLoaded, isAuthLoaded, isSignedIn])
 
+  // Get effective userId (considering workspace switching)
+  const effectiveUserId = useMemo(() => {
+    const storedWorkspace = localStorage.getItem('currentWorkspace')
+    if (storedWorkspace) {
+      try {
+        const workspace = JSON.parse(storedWorkspace)
+        return workspace.workspaceOwnerId || user?.id || null
+      } catch (e) {
+        return user?.id || null
+      }
+    }
+    return user?.id || null
+  }, [user?.id])
+
   const value = {
     userId: user?.id || null,
+    effectiveUserId, // The user ID to use for API calls (could be workspace owner)
     user,
     isLoaded: isUserLoaded && isAuthLoaded && !isLoading,
     isSignedIn,

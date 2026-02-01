@@ -1,91 +1,272 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
-  User,
-  Heart,
-  Star,
-  Settings,
+  Sun,
+  Moon,
+  Type,
   Bell,
-  LogOut,
-  Edit2,
+  Layout,
+  RotateCcw,
+  Check,
+  Monitor,
 } from "lucide-react";
-import Header from "@/components/header"
+import Header from "@/components/header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useSettingsStore } from "@/store/useSettingsStore";
+import { useAuthContext } from "@/components/AuthProvider";
+import { cn } from "@/lib/utils";
+
+const fontSizeOptions = [
+  { value: 'small', label: 'Small', preview: 'Aa' },
+  { value: 'medium', label: 'Medium', preview: 'Aa' },
+  { value: 'large', label: 'Large', preview: 'Aa' },
+  { value: 'extra-large', label: 'Extra Large', preview: 'Aa' },
+];
+
+const themeOptions = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+];
+
+function SettingCard({ title, description, icon: Icon, children }) {
+  return (
+    <Card className="transition-all hover:shadow-md">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-3">
+          {Icon && (
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
+          )}
+          <div>
+            <CardTitle className="text-lg">{title}</CardTitle>
+            <CardDescription className="text-sm">{description}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
+}
+
+function ToggleSwitch({ checked, onChange, disabled }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        checked ? "bg-primary" : "bg-muted"
+      )}
+    >
+      <span
+        className={cn(
+          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out",
+          checked ? "translate-x-5" : "translate-x-0"
+        )}
+      />
+    </button>
+  );
+}
 
 export default function SettingsPage() {
+  const { userId } = useAuthContext();
+  const { settings, fetchSettings, updateSettings, setLocalSettings, resetSettings, loading } = useSettingsStore();
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (userId) {
+      fetchSettings(userId);
+    }
+  }, [userId, fetchSettings]);
+
+  const handleSettingChange = async (key, value) => {
+    if (!userId) return;
+    // Update local state immediately
+    setLocalSettings({ [key]: value });
+    
+    // Auto-save to backend
+    setIsSaving(true);
+    await updateSettings(userId, { ...settings, [key]: value });
+    setIsSaving(false);
+  };
+
+  const handleReset = async () => {
+    if (!userId) return;
+    
+    setIsSaving(true);
+    await resetSettings(userId);
+    setIsSaving(false);
+  };
+
+  const getCurrentValue = (key) => {
+    return localChanges[key] !== undefined ? localChanges[key] : settings[key];
+  };
+
   return (
     <div className="flex-1 min-h-screen">
-      {/* Main Content */}
-      <Header />
-      <main className="flex-1 p-6 md:p-12">
-        <div className="max-w-3xl mx-auto bg-white shadow-md rounded-xl p-6">
-          {/* Profile Image */}
-          <div className="flex flex-col items-center">
-            <div className="relative">
-              <img
-                src="https://randomuser.me/api/portraits/women/44.jpg"
-                alt="Profile"
-                className="w-24 h-24 rounded-full border-4 border-white shadow-md"
-              />
-              <button className="absolute bottom-0 right-0 bg-blue-500 p-1 rounded-full shadow hover:bg-blue-600">
-                <Edit2 size={14} className="text-white" />
-              </button>
+      <div className="mx-8 my-2">
+        <Header
+          title="Settings"
+          description="Customize your experience"
+        />
+      </div>
+      
+      <main className="flex-1 px-8 pb-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Theme Selection */}
+          <SettingCard
+            title="Theme"
+            description="Choose your preferred color scheme"
+            icon={Monitor}
+          >
+            <div className="flex gap-3">
+              {themeOptions.map((option) => {
+                const Icon = option.icon;
+                const isSelected = settings.theme === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => handleSettingChange('theme', option.value)}
+                    className={cn(
+                      "flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                    )}
+                  >
+                    <div className={cn(
+                      "p-3 rounded-lg",
+                      option.value === 'light' ? "bg-white shadow-md" : "bg-gray-800"
+                    )}>
+                      <Icon className={cn(
+                        "h-6 w-6",
+                        option.value === 'light' ? "text-yellow-500" : "text-blue-300"
+                      )} />
+                    </div>
+                    <span className="font-medium">{option.label}</span>
+                    {isSelected && (
+                      <Check className="h-4 w-4 text-primary" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-            <h2 className="mt-4 text-lg font-semibold">Sara Tancredi</h2>
-            <p className="text-gray-500 text-sm">New York, USA</p>
-          </div>
+          </SettingCard>
 
-          {/* Form */}
-          <form className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField label="Name" value="Sara" />
-            <InputField label="Full Name" value="Tancredi" />
-            <InputField label="Email Address" value="SaraTancredi@gmail.com" />
-            <InputField label="Phone Number" value="(+98) 9123728167" />
-            <InputField label="Location" value="e.g. New York, USA" />
-            <InputField label="Postal Code" value="23728167" />
-          </form>
+          {/* Font Size */}
+          <SettingCard
+            title="Font Size"
+            description="Adjust the text size for better readability"
+            icon={Type}
+          >
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {fontSizeOptions.map((option) => {
+                const isSelected = settings.font_size === option.value;
+                const fontSizeClass = {
+                  'small': 'text-xs',
+                  'medium': 'text-sm',
+                  'large': 'text-base',
+                  'extra-large': 'text-lg'
+                }[option.value];
+                
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => handleSettingChange('font_size', option.value)}
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                    )}
+                  >
+                    <span className={cn("font-bold", fontSizeClass)}>{option.preview}</span>
+                    <span className="text-sm text-muted-foreground">{option.label}</span>
+                    {isSelected && (
+                      <Check className="h-4 w-4 text-primary" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </SettingCard>
 
-          {/* Save Button */}
-          <div className="mt-6 flex justify-center">
-            <button
-              type="submit"
-              className="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-400 text-white font-medium shadow hover:from-blue-600 hover:to-blue-500 transition"
+          {/* Layout Options */}
+          <SettingCard
+            title="Layout"
+            description="Customize the interface layout"
+            icon={Layout}
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base">Compact Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Reduce spacing and padding for a denser layout
+                  </p>
+                </div>
+                <ToggleSwitch
+                  checked={settings.compact_mode}
+                  onChange={(value) => handleSettingChange('compact_mode', value)}
+                />
+              </div>
+              
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base">Sidebar Collapsed by Default</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Start with the sidebar in collapsed state
+                    </p>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.sidebar_collapsed}
+                    onChange={(value) => handleSettingChange('sidebar_collapsed', value)}
+                  />
+                </div>
+              </div>
+            </div>
+          </SettingCard>
+
+          {/* Notifications */}
+          <SettingCard
+            title="Notifications"
+            description="Manage your notification preferences"
+            icon={Bell}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base">Enable Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive notifications for order updates and reminders
+                </p>
+              </div>
+              <ToggleSwitch
+                checked={settings.notifications_enabled}
+                onChange={(value) => handleSettingChange('notifications_enabled', value)}
+              />
+            </div>
+          </SettingCard>
+
+          {/* Reset Button */}
+          <div className="flex justify-end items-center pt-4">
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              disabled={isSaving || loading}
+              className="gap-2"
             >
-              Save Changes
-            </button>
+              <RotateCcw className="h-4 w-4" />
+              Reset to Defaults
+            </Button>
           </div>
         </div>
       </main>
-    </div>
-  );
-}
-
-// Reusable Nav Item
-function NavItem({ icon, text, active }) {
-  return (
-    <div
-      className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition ${
-        active
-          ? "bg-blue-50 text-blue-500"
-          : "text-gray-700 hover:bg-gray-100"
-      }`}
-    >
-      {icon}
-      <span>{text}</span>
-    </div>
-  );
-}
-
-// Reusable Input Field
-function InputField({ label, value }) {
-  return (
-    <div className="form-control w-full">
-      <label className="label">
-        <span className="label-text">{label}</span>
-      </label>
-      <input
-        type="text"
-        defaultValue={value}
-        className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
     </div>
   );
 }
