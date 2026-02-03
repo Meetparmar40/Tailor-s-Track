@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import axios from "axios";
+import API_URL from "@/lib/api";
+import { notify } from "@/hooks/use-toast";
 
-const BASE_URL = import.meta.env.MODE === "development" 
-  ? `http://${window.location.hostname}:3000` 
-  : '';
+const BASE_URL = API_URL;
 
 export const useOrdersStore = create((set, get) => ({
     orders: [],
@@ -17,6 +17,7 @@ export const useOrdersStore = create((set, get) => ({
     fetchOrders: async (userId, { limit = 10, lastDate, tag } = {}) => {
         if (!userId) {
             set({ error: "User not authenticated" });
+            notify.error("User not authenticated");
             return;
         }
         set({ loading: true });
@@ -33,8 +34,13 @@ export const useOrdersStore = create((set, get) => ({
             set({ orders: data, error: null, hasMore, lastDate: nextCursor });
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) set({ error: "rate limit exceeded, try again after some time" });
-            else set({ error: "something went wrong" });
+            if (status === 429) {
+                set({ error: "rate limit exceeded, try again after some time" });
+                notify.warning("Rate limit exceeded. Please try again later.");
+            } else {
+                set({ error: "something went wrong" });
+                notify.error("Failed to load orders");
+            }
         } finally {
             set({ loading: false });
         }
@@ -64,8 +70,13 @@ export const useOrdersStore = create((set, get) => ({
             });
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) set({ error: "rate limit exceeded, try again after some time" });
-            else set({ error: "something went wrong" });
+            if (status === 429) {
+                set({ error: "rate limit exceeded, try again after some time" });
+                notify.warning("Rate limit exceeded. Please try again later.");
+            } else {
+                set({ error: "something went wrong" });
+                notify.error("Failed to load more orders");
+            }
         } finally {
             set({ isLoadingMore: false });
         }
@@ -74,10 +85,12 @@ export const useOrdersStore = create((set, get) => ({
     fetchOrdersOfCustomer: async (userId, customerId) => {
         if (!userId) {
             set({ error: "User not authenticated" });
+            notify.error("User not authenticated");
             return { success: false, error: "User not authenticated" };
         }
         if (!customerId) {
             set({ error: "Customer Id is needed" });
+            notify.error("Customer ID is required");
             return { success: false, error: "Customer Id is needed" };
         }
         set({ loading: true });
@@ -90,8 +103,13 @@ export const useOrdersStore = create((set, get) => ({
             return { success: true, data: ordersData };
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) set({ error: "rate limit exceeded, try again after some time" });
-            else set({ error: "something went wrong" });
+            if (status === 429) {
+                set({ error: "rate limit exceeded, try again after some time" });
+                notify.warning("Rate limit exceeded. Please try again later.");
+            } else {
+                set({ error: "something went wrong" });
+                notify.error("Failed to load customer orders");
+            }
             return { success: false, error: "Failed to fetch orders" };
         } finally {
             set({ loading: false });
@@ -101,10 +119,12 @@ export const useOrdersStore = create((set, get) => ({
     fetchOrder: async (userId, orderId) => {
         if (!userId) {
             set({ error: "User not authenticated" });
+            notify.error("User not authenticated");
             return { success: false, error: "User not authenticated" };
         }
         if (!orderId) {
             set({ error: "Order Id is needed" });
+            notify.error("Order ID is required");
             return { success: false, error: "Order Id is needed" };
         }
         set({ loading: true });
@@ -117,8 +137,13 @@ export const useOrdersStore = create((set, get) => ({
             return { success: true, data: orderData };
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) set({ error: "rate limit exceeded, try again after some time" });
-            else set({ error: "something went wrong" });
+            if (status === 429) {
+                set({ error: "rate limit exceeded, try again after some time" });
+                notify.warning("Rate limit exceeded. Please try again later.");
+            } else {
+                set({ error: "something went wrong" });
+                notify.error("Failed to load order details");
+            }
             return { success: false, error: "Failed to fetch order" };
         } finally {
             set({ loading: false });
@@ -127,9 +152,11 @@ export const useOrdersStore = create((set, get) => ({
 
     createOrder: async (userId, customerId, orderData) => {
         if (!userId) {
+            notify.error("User not authenticated");
             return { success: false, error: "User not authenticated" };
         }
         if (!customerId) {
+            notify.error("Customer ID is required");
             return { success: false, error: "Customer Id is needed" };
         }
 
@@ -138,19 +165,30 @@ export const useOrdersStore = create((set, get) => ({
             const response = await axios.post(url, orderData);
             const newOrder = response.data.data;
             set({ orders: [newOrder, ...get().orders] });
+            notify.success("Order created successfully");
             return { success: true, data: newOrder };
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) return { success: false, error: "rate limit exceeded" };
+            if (status === 429) {
+                notify.warning("Rate limit exceeded. Please try again later.");
+                return { success: false, error: "rate limit exceeded" };
+            }
+            if (status === 400) {
+                notify.error("Invalid order data. Please check your inputs.");
+                return { success: false, error: "Invalid data" };
+            }
+            notify.error("Failed to create order");
             return { success: false, error: "Failed to create order" };
         }
     },
 
     updateOrder: async (userId, orderId, orderData) => {
         if (!userId) {
+            notify.error("User not authenticated");
             return { success: false, error: "User not authenticated" };
         }
         if (!orderId) {
+            notify.error("Order ID is required");
             return { success: false, error: "Order Id is needed" };
         }
 
@@ -162,19 +200,30 @@ export const useOrdersStore = create((set, get) => ({
                 orders: get().orders.map(o => o.id === orderId ? updatedOrder : o),
                 currentOrder: updatedOrder
             });
+            notify.success("Order updated successfully");
             return { success: true, data: updatedOrder };
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) return { success: false, error: "rate limit exceeded" };
+            if (status === 429) {
+                notify.warning("Rate limit exceeded. Please try again later.");
+                return { success: false, error: "rate limit exceeded" };
+            }
+            if (status === 400) {
+                notify.error("Invalid order data. Please check your inputs.");
+                return { success: false, error: "Invalid data" };
+            }
+            notify.error("Failed to update order");
             return { success: false, error: "Failed to update order" };
         }
     },
 
     deleteOrder: async (userId, orderId) => {
         if (!userId) {
+            notify.error("User not authenticated");
             return { success: false, error: "User not authenticated" };
         }
         if (!orderId) {
+            notify.error("Order ID is required");
             return { success: false, error: "Order Id is needed" };
         }
 
@@ -185,10 +234,15 @@ export const useOrdersStore = create((set, get) => ({
                 orders: get().orders.filter(o => o.id !== orderId),
                 currentOrder: null
             });
+            notify.success("Order deleted successfully");
             return { success: true };
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) return { success: false, error: "rate limit exceeded" };
+            if (status === 429) {
+                notify.warning("Rate limit exceeded. Please try again later.");
+                return { success: false, error: "rate limit exceeded" };
+            }
+            notify.error("Failed to delete order");
             return { success: false, error: "Failed to delete order" };
         }
     },

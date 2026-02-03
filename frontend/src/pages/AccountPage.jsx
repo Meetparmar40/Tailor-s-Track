@@ -472,7 +472,7 @@ export default function AccountPage() {
                   <DialogTitle>Add New Admin</DialogTitle>
                   <DialogDescription>
                     Enter the email of a user you want to give access to your workspace.
-                    They must have a Tailor Track account.
+                    They must have a Mentro account.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">

@@ -1,9 +1,8 @@
 import { create } from "zustand";
 import axios from "axios";
+import BASE_URL from "@/lib/api";
 
-const API_URL = import.meta.env.MODE === "development"
-  ? `http://${window.location.hostname}:3000/api`
-  : "/api";
+const API_URL = `${BASE_URL}/api`;
 
 export const useAdminStore = create((set, get) => ({
   admins: [],

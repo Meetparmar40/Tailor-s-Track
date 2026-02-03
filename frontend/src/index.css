@@ -111,6 +111,16 @@
     font-size: var(--base-font-size, 14px);
   }
 
+  /* Animated gradient for text */
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .animate-gradient {
+    animation: gradient 3s ease infinite;
+  }
+
   /* Responsive font size adjustments */
   @media (max-width: 768px) {
     html {
@@ -160,4 +170,73 @@
       @apply py-3 px-4; 
     }
   }
+}
+
+/* Magic UI Orbiting Circles Animation */
+@keyframes orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Toast Notifications Styling */
+[data-sonner-toaster] {
+  font-family: var(--font-family-base) !important;
+}
+
+[data-sonner-toast] {
+  --normal-bg: hsl(var(--background));
+  --normal-border: hsl(var(--border));
+  --normal-text: hsl(var(--foreground));
+}
+
+[data-sonner-toast][data-type="success"] {
+  --success-bg: hsl(142 76% 96%);
+  --success-border: hsl(142 76% 86%);
+  --success-text: hsl(142 76% 26%);
+}
+
+.dark [data-sonner-toast][data-type="success"] {
+  --success-bg: hsl(142 76% 8%);
+  --success-border: hsl(142 50% 20%);
+  --success-text: hsl(142 76% 86%);
+}
+
+[data-sonner-toast][data-type="error"] {
+  --error-bg: hsl(0 84% 96%);
+  --error-border: hsl(0 84% 86%);
+  --error-text: hsl(0 84% 30%);
+}
+
+.dark [data-sonner-toast][data-type="error"] {
+  --error-bg: hsl(0 60% 8%);
+  --error-border: hsl(0 50% 20%);
+  --error-text: hsl(0 84% 86%);
+}
+
+[data-sonner-toast][data-type="warning"] {
+  --warning-bg: hsl(38 92% 96%);
+  --warning-border: hsl(38 92% 80%);
+  --warning-text: hsl(38 92% 25%);
+}
+
+.dark [data-sonner-toast][data-type="warning"] {
+  --warning-bg: hsl(38 60% 8%);
+  --warning-border: hsl(38 50% 20%);
+  --warning-text: hsl(38 92% 86%);
+}
+
+[data-sonner-toast][data-type="info"] {
+  --info-bg: hsl(214 100% 96%);
+  --info-border: hsl(214 100% 86%);
+  --info-text: hsl(214 100% 30%);
+}
+
+.dark [data-sonner-toast][data-type="info"] {
+  --info-bg: hsl(214 60% 8%);
+  --info-border: hsl(214 50% 20%);
+  --info-text: hsl(214 100% 86%);
 }

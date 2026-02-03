@@ -18,6 +18,7 @@ import { data } from "./components/sidebar-data";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Toaster } from "@/components/ui/toaster";
 import Loader from "@/components/ui/Loader";
 import { useSettingsStore } from "./store/useSettingsStore";
 
@@ -55,12 +56,15 @@ function App() {
   // Show HeroPage for unauthenticated users on public routes
   if (!isSignedIn) {
     return (
-      <Routes>
-        <Route path="/" element={<HeroPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Login isSignUp />} />
-        <Route path="*" element={<HeroPage />} />
-      </Routes>
+      <>
+        <Routes>
+          <Route path="/" element={<HeroPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Login isSignUp />} />
+          <Route path="*" element={<HeroPage />} />
+        </Routes>
+        <Toaster />
+      </>
     );
   }
 
@@ -99,6 +103,7 @@ function App() {
               </main>
             </div>
           </div>
+          <Toaster />
         </SidebarProvider>
       </SettingsInitializer>
     </AuthProvider>

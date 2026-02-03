@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import API_URL from '@/lib/api';
+import { notify } from '@/hooks/use-toast';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE = `${API_URL}/api`;
 
 const defaultSettings = {
     theme: 'light',
@@ -35,6 +37,7 @@ export const useSettingsStore = create(
                 } catch (error) {
                     console.error('Error fetching settings:', error);
                     set({ error: error.message, loading: false });
+                    notify.error('Failed to load settings');
                 }
             },
 
@@ -57,9 +60,11 @@ export const useSettingsStore = create(
                     
                     // Apply settings immediately
                     get().applySettings();
+                    notify.success('Settings saved successfully');
                 } catch (error) {
                     console.error('Error updating settings:', error);
                     set({ error: error.message, loading: false });
+                    notify.error('Failed to save settings');
                 }
             },
 

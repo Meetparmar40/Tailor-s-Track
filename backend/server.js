@@ -3,24 +3,30 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import recordRoutes from "./routes/recordRoutes.js";
 import { sql } from "./config/db.js";
 import { aj } from "./lib/arcjet.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 dotenv.config({ path: "./.env" });
 
-// General Middleware
 app.use(express.json());
 app.use(cors());
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan("dev"));
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 app.set("eTag", false)
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-app.use(async (req, res, next) => {
+
+const arcjetMiddleware = async (req, res, next) => {
     try {
         const decision = await aj.protect(req, { requested: 1 });
 
@@ -42,15 +48,18 @@ app.use(async (req, res, next) => {
         console.log("Arcjet Error : " + error);
         next(error); // Pass error to global error handler
     }
-});
+}
 
-app.use("/api/", recordRoutes);
+app.use("/api/", arcjetMiddleware, recordRoutes);
+
+app.get("/{*splat}", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
 
 app.use((err, req, res, next) => {
   console.error("Global Error Handler Caught:", err.stack);
   res.status(500).json({ error: 'An unexpected error occurred!' });
 });
-
 
 async function initDB() {
     try {

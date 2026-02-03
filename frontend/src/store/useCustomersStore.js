@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import axios from "axios";
+import API_URL from "@/lib/api";
+import { notify } from "@/hooks/use-toast";
 
-const BASE_URL = import.meta.env.MODE === "development" 
-  ? `http://${window.location.hostname}:3000` 
-  : '';
+const BASE_URL = API_URL;
 
 export const useCustomersStore = create((set, get) => ({
     customers: [],
@@ -17,6 +17,7 @@ export const useCustomersStore = create((set, get) => ({
     fetchCustomers: async (userId, { limit = 10, lastDate } = {}) => {
         if (!userId) {
             set({ error: "User not authenticated" });
+            notify.error("User not authenticated");
             return;
         }
         set({ loading: true });
@@ -33,9 +34,13 @@ export const useCustomersStore = create((set, get) => ({
             set({ customers: data, error: null, hasMore, lastDate: nextCursor });
 
         } catch (err) {
-            if (err?.response?.status === 429) set({ error: "rate limit exceeded, try again after some time" });
-            else set({ error: "something went wrong" });
-
+            if (err?.response?.status === 429) {
+                set({ error: "rate limit exceeded, try again after some time" });
+                notify.warning("Rate limit exceeded. Please try again later.");
+            } else {
+                set({ error: "something went wrong" });
+                notify.error("Failed to load customers");
+            }
         } finally {
             set({ loading: false });
         }
@@ -59,8 +64,13 @@ export const useCustomersStore = create((set, get) => ({
                 lastDate: nextCursor,
             });
         } catch (err) {
-            if (err?.response?.status === 429) set({ error: "rate limit exceeded, try again after some time" });
-            else set({ error: "something went wrong" });
+            if (err?.response?.status === 429) {
+                set({ error: "rate limit exceeded, try again after some time" });
+                notify.warning("Rate limit exceeded. Please try again later.");
+            } else {
+                set({ error: "something went wrong" });
+                notify.error("Failed to load more customers");
+            }
         } finally {
             set({ loading: false, isLoadingMore: false });
         }
@@ -69,10 +79,12 @@ export const useCustomersStore = create((set, get) => ({
     fetchCustomer: async (userId, customerId) => {
         if (!userId) {
             set({ error: "User not authenticated" });
+            notify.error("User not authenticated");
             return { success: false, error: "User not authenticated" };
         }
         if (!customerId) {
             set({ error: "Customer Id is needed" });
+            notify.error("Customer ID is required");
             return { success: false, error: "Customer Id is needed" };
         }
         set({ loading: true });
@@ -85,8 +97,13 @@ export const useCustomersStore = create((set, get) => ({
             return { success: true, data: customerData };
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) set({ error: "rate limit exceeded, try again after some time" });
-            else set({ error: "something went wrong" });
+            if (status === 429) {
+                set({ error: "rate limit exceeded, try again after some time" });
+                notify.warning("Rate limit exceeded. Please try again later.");
+            } else {
+                set({ error: "something went wrong" });
+                notify.error("Failed to load customer details");
+            }
             return { success: false, error: "Failed to fetch customer" };
         } finally {
             set({ loading: false });
@@ -96,10 +113,12 @@ export const useCustomersStore = create((set, get) => ({
     updateCustomer: async (userId, customerId, customerData) => {
         if (!userId) {
             set({ error: "User not authenticated" });
+            notify.error("User not authenticated");
             return { success: false, error: "User not authenticated" };
         }
         if (!customerId) {
             set({ error: "Customer ID is required" });
+            notify.error("Customer ID is required");
             return { success: false, error: "Customer ID is required" };
         }
 
@@ -119,11 +138,20 @@ export const useCustomersStore = create((set, get) => ({
                 currentCustomer: updatedCustomer
             });
 
+            notify.success("Customer updated successfully");
             return { success: true, data: updatedCustomer };
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) set({ error: "rate limit exceeded, try again after some time" });
-            else set({ error: "something went wrong" });
+            if (status === 429) {
+                set({ error: "rate limit exceeded, try again after some time" });
+                notify.warning("Rate limit exceeded. Please try again later.");
+            } else if (status === 400) {
+                set({ error: "Invalid customer data" });
+                notify.error("Invalid customer data. Please check your inputs.");
+            } else {
+                set({ error: "something went wrong" });
+                notify.error("Failed to update customer");
+            }
             return { success: false, error: "Failed to update customer" };
         } finally {
             set({ loading: false });
@@ -132,9 +160,11 @@ export const useCustomersStore = create((set, get) => ({
 
     deleteCustomer: async (userId, customerId) => {
         if (!userId) {
+            notify.error("User not authenticated");
             return { success: false, error: "User not authenticated" };
         }
         if (!customerId) {
+            notify.error("Customer ID is required");
             return { success: false, error: "Customer ID is required" };
         }
 
@@ -147,10 +177,15 @@ export const useCustomersStore = create((set, get) => ({
                 currentCustomer: null
             });
 
+            notify.success("Customer deleted successfully");
             return { success: true };
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) return { success: false, error: "rate limit exceeded" };
+            if (status === 429) {
+                notify.warning("Rate limit exceeded. Please try again later.");
+                return { success: false, error: "rate limit exceeded" };
+            }
+            notify.error("Failed to delete customer");
             return { success: false, error: "Failed to delete customer" };
         }
     },
@@ -158,7 +193,14 @@ export const useCustomersStore = create((set, get) => ({
     // Alias for backwards compatibility
     addCustomer: async (userId, customerData) => {
         if (!userId) {
+            notify.error("User not authenticated");
             return { success: false, error: "User not authenticated" };
+        }
+
+        // Validate required fields
+        if (!customerData.name?.trim()) {
+            notify.warning("Please enter a customer name");
+            return { success: false, error: "Name is required" };
         }
 
         try {
@@ -166,10 +208,19 @@ export const useCustomersStore = create((set, get) => ({
             const response = await axios.post(url, customerData);
             const newCustomer = response.data.data;
             set({ customers: [newCustomer, ...get().customers] });
+            notify.success("Customer created successfully");
             return { success: true, data: newCustomer };
         } catch (error) {
             const status = error?.response?.status;
-            if (status === 429) return { success: false, error: "rate limit exceeded" };
+            if (status === 429) {
+                notify.warning("Rate limit exceeded. Please try again later.");
+                return { success: false, error: "rate limit exceeded" };
+            }
+            if (status === 400) {
+                notify.error("Invalid customer data. Please check your inputs.");
+                return { success: false, error: "Invalid data" };
+            }
+            notify.error("Failed to create customer");
             return { success: false, error: "Failed to create customer" };
         }
     },
