@@ -1,4 +1,5 @@
 import { sql } from "../config/db.js";
+import { clerkClient } from "@clerk/express";
 
 // Clerk Webhook handler for user events
 export const clerkWebhook = async (req, res) => {
@@ -73,21 +74,25 @@ async function handleUserDeleted(data) {
 
 // Sync user on first API request (fallback if webhook wasn't received)
 export const syncUser = async (req, res) => {
-    const { userId, email, firstName, lastName, imageUrl } = req.body;
-
-    if (!userId || !email) {
-        return res.status(400).json({ success: false, message: "userId and email are required" });
-    }
-
     try {
+        const userId = req.authUserId;
+        const clerkUser = await clerkClient.users.getUser(userId);
+        const primaryEmail = clerkUser.emailAddresses?.find(
+            (email) => email.id === clerkUser.primaryEmailAddressId
+        )?.emailAddress || clerkUser.emailAddresses?.[0]?.emailAddress;
+
+        if (!primaryEmail) {
+            return res.status(400).json({ success: false, message: "User email is required" });
+        }
+
         const result = await sql`
             INSERT INTO users (id, email, first_name, last_name, image_url)
-            VALUES (${userId}, ${email}, ${firstName || null}, ${lastName || null}, ${imageUrl || null})
+            VALUES (${userId}, ${primaryEmail}, ${clerkUser.firstName || null}, ${clerkUser.lastName || null}, ${clerkUser.imageUrl || null})
             ON CONFLICT (id) DO UPDATE SET
-                email = ${email},
-                first_name = ${firstName || null},
-                last_name = ${lastName || null},
-                image_url = ${imageUrl || null},
+                email = ${primaryEmail},
+                first_name = ${clerkUser.firstName || null},
+                last_name = ${clerkUser.lastName || null},
+                image_url = ${clerkUser.imageUrl || null},
                 updated_at = NOW()
             RETURNING *
         `;

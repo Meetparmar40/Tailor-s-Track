@@ -5,6 +5,7 @@ import morgan from "morgan";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import { clerkMiddleware } from "@clerk/express";
 import recordRoutes from "./routes/recordRoutes.js";
 import { sql } from "./config/db.js";
 import { aj } from "./lib/arcjet.js";
@@ -13,11 +14,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-dotenv.config({ path: "./.env" });
+dotenv.config({ path: path.join(__dirname, "../.env") });
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(express.json());
-app.use(cors());
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(clerkMiddleware());
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 app.use(morgan("dev"));
 
 const PORT = process.env.PORT || 3000;

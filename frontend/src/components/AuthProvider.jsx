@@ -1,7 +1,7 @@
 import { useEffect, createContext, useContext, useState, useMemo } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import axios from 'axios'
-import BASE_URL from '@/lib/api'
+import BASE_URL, { setAuthTokenProvider } from '@/lib/api'
 
 const API_URL = `${BASE_URL}/api`
 
@@ -9,13 +9,21 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const { user, isLoaded: isUserLoaded } = useUser()
-  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth()
+  const { isSignedIn, isLoaded: isAuthLoaded, getToken } = useAuth()
   const [isSynced, setIsSynced] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAuthConfigured, setIsAuthConfigured] = useState(false)
+
+  useEffect(() => {
+    setAuthTokenProvider(isSignedIn ? getToken : null)
+    setIsAuthConfigured(true)
+
+    return () => setAuthTokenProvider(null)
+  }, [getToken, isSignedIn])
 
   useEffect(() => {
     async function syncUserWithBackend() {
-      if (!isUserLoaded || !isAuthLoaded) return
+      if (!isUserLoaded || !isAuthLoaded || !isAuthConfigured) return
 
       if (!isSignedIn || !user) {
         setIsSynced(false)
@@ -25,13 +33,7 @@ export function AuthProvider({ children }) {
 
       try {
         // Sync user data with backend (creates user if doesn't exist)
-        await axios.post(`${API_URL}/syncUser`, {
-          userId: user.id,
-          email: user.primaryEmailAddress?.emailAddress,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          imageUrl: user.imageUrl
-        })
+        await axios.post(`${API_URL}/syncUser`)
         setIsSynced(true)
       } catch (error) {
         console.error('Failed to sync user with backend:', error)
@@ -43,7 +45,9 @@ export function AuthProvider({ children }) {
     }
 
     syncUserWithBackend()
-  }, [user, isUserLoaded, isAuthLoaded, isSignedIn])
+  }, [user, isUserLoaded, isAuthLoaded, isAuthConfigured, isSignedIn])
+
+  const isReady = isUserLoaded && isAuthLoaded && isAuthConfigured && !isLoading
 
   // Get effective userId (considering workspace switching)
   const effectiveUserId = useMemo(() => {
@@ -60,10 +64,10 @@ export function AuthProvider({ children }) {
   }, [user?.id])
 
   const value = {
-    userId: user?.id || null,
-    effectiveUserId, // The user ID to use for API calls (could be workspace owner)
-    user,
-    isLoaded: isUserLoaded && isAuthLoaded && !isLoading,
+    userId: isReady ? user?.id || null : null,
+    effectiveUserId: isReady ? effectiveUserId : null, // The user ID to use for API calls (could be workspace owner)
+    user: isReady ? user : null,
+    isLoaded: isReady,
     isSignedIn,
     isSynced
   }

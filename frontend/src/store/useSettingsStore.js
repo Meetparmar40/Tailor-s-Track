@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import API_URL from '@/lib/api';
+import API_URL, { authFetch } from '@/lib/api';
 import { notify } from '@/hooks/use-toast';
 
 const API_BASE = `${API_URL}/api`;
@@ -26,7 +26,7 @@ export const useSettingsStore = create(
                 
                 set({ loading: true, error: null });
                 try {
-                    const response = await fetch(`${API_BASE}/getSettings/${userId}`);
+                    const response = await authFetch(`${API_BASE}/getSettings/${userId}`);
                     if (!response.ok) throw new Error('Failed to fetch settings');
                     
                     const data = await response.json();
@@ -47,7 +47,7 @@ export const useSettingsStore = create(
                 
                 set({ loading: true, error: null });
                 try {
-                    const response = await fetch(`${API_BASE}/updateSettings/${userId}`, {
+                    const response = await authFetch(`${API_BASE}/updateSettings/${userId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(newSettings),
